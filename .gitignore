@@ -1,0 +1,22 @@
+@"
+# Generated data -- not source code, shouldn't be versioned
+media_monitor.db
+output/
+demo_output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Editor/OS cruft
+.vscode/
+.idea/
+.DS_Store
+"@ | Out-File -FilePath .gitignore -Encoding utf8
