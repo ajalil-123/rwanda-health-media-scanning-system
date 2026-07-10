@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ scan.mode|title }} scan review{% endblock %}
+
+{% block content %}
+  <a class="back-link" href="{{ url_for('index') }}">&larr; All scans</a>
+
+  <h1>{{ scan.mode|title }} scan <span class="badge badge-{{ scan.mode }}">{{ scan.mode }}</span></h1>
+  <p class="subtitle">
+    Window: {{ scan.window_start[:16].replace('T', ' ') }} &rarr; {{ scan.window_end[:16].replace('T', ' ') }}
+    &middot; {{ total_items }} items in shortlist &middot; {{ included_count }} marked for inclusion so far
+  </p>
+
+  <form method="post" action="{{ url_for('save_review', scan_id=scan.id) }}">
+    {% for cat in category_order %}
+      {% set items = grouped.get(cat, []) %}
+      {% if items %}
+        <h2 class="section-heading">{{ category_labels[cat] }} <span class="count">({{ items|length }})</span></h2>
+
+        {% for item in items %}
+          <div class="item-card {% if item.included == 1 %}item-included{% endif %}">
+            <div class="item-header">
+              <label class="include-toggle">
+                <input type="checkbox" name="include_{{ item.id }}" {% if item.included == 1 %}checked{% endif %}>
+                Include in report
+              </label>
+              {% if item.highlight_score %}
+                <span class="score" title="Highlight score: outlet coverage + recency + keyword signal">
+                  score {{ "%.1f"|format(item.highlight_score) }}
+                </span>
+              {% endif %}
+            </div>
+
+            <h3 class="item-title"><a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.title }}</a></h3>
+
+            <p class="item-meta">
+              {{ item.source_name }}
+              {% if item.language %} &middot; {{ item.language }}{% endif %}
+              {% if item.published_at %} &middot; {{ item.published_at[:16].replace('T', ' ') }}{% endif %}
+              {% if item.covered_by %}
+                &middot; also covered by: {{ item.covered_by.split(',') | reject('equalto', item.source_name) | join(', ') }}
+              {% endif %}
+            </p>
+
+            {% if item.matched_keywords %}
+              <p class="item-keywords">matched: {{ item.matched_keywords }}</p>
+            {% endif %}
+
+            {% if item.snippet %}
+              <p class="item-snippet">{{ item.snippet }}</p>
+            {% endif %}
+
+            <label class="summary-label" for="summary_{{ item.id }}">Editor summary (report style)</label>
+            <textarea name="summary_{{ item.id }}" id="summary_{{ item.id }}" rows="2"
+                      placeholder="Write the summary as it should appear in the report...">{{ item.editor_summary or '' }}</textarea>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+
+    <div class="save-bar">
+      <button type="submit" class="btn btn-primary">Save review</button>
+    </div>
+  </form>
+
+  <div class="generate-bar">
+    <p class="generate-note">Save your review first, then generate the Word report from everything marked "Include."</p>
+    <a class="btn btn-generate" href="{{ url_for('generate_report', scan_id=scan.id) }}">Generate Word Report</a>
+  </div>
+{% endblock %}

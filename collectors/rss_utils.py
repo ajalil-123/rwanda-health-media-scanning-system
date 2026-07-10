@@ -74,8 +74,16 @@ def parse_feed(xml_text):
             link = _text(item, "link")
             pub_date = parse_rss_datetime(_text(item, "pubDate"))
             summary = _text(item, "description")
+            source_el = item.find("source")  # Google News RSS: <source url="...">Publisher Name</source>
+            source_name = source_el.text.strip() if source_el is not None and source_el.text else None
             if title and link:
-                items.append({"title": title, "url": link, "published_at": pub_date, "summary": summary})
+                items.append({
+                    "title": title,
+                    "url": link,
+                    "published_at": pub_date,
+                    "summary": summary,
+                    "source_name": source_name,  # None for feeds that don't provide this (e.g. most direct outlet feeds)
+                })
         return items
 
     # Atom: <feed><entry>...

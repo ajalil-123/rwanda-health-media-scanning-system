@@ -80,9 +80,10 @@ def main():
 
     with patch("collectors.google_news.collect", return_value=[]), \
          patch("collectors.direct_rss.collect", return_value=fixture_items), \
+         patch("collectors.web_scraper.collect", return_value=[]), \
          patch("collectors.pubmed.collect", return_value=[]):
 
-        result = scan.run_scan("daily", end_date=now, db_path=db_path)
+        result = scan.run_scan("daily", target_date=now, db_path=db_path)
 
     print("\n=== DAILY SCAN RESULT (offline demo) ===")
     print(f"Window: {result['window_start'].isoformat()} to {result['window_end'].isoformat()}")

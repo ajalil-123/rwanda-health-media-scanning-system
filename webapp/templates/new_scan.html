@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}New scan -- Rwanda Health Media Scanning System{% endblock %}
+
+{% block content %}
+  <a class="back-link" href="{{ url_for('index') }}">&larr; All scans</a>
+
+  <h1>Run a new scan</h1>
+  <p class="subtitle">Choose a day for a daily scan, or a period for a weekly scan. The scan runs immediately -- this page will take a moment while it collects and filters results.</p>
+
+  <form method="post" action="{{ url_for('run_scan_route') }}" class="scan-form" id="scan-form">
+    <div class="form-group">
+      <label>Scan type</label>
+      <div class="mode-toggle">
+        <label class="mode-option">
+          <input type="radio" name="mode" value="daily" checked onchange="toggleMode()">
+          Daily -- scan one specific day
+        </label>
+        <label class="mode-option">
+          <input type="radio" name="mode" value="weekly" onchange="toggleMode()">
+          Weekly -- scan a period of days
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group" id="daily-fields">
+      <label for="date">Date to scan</label>
+      <input type="date" name="date" id="date" value="{{ today }}">
+      <p class="field-hint">Scans exactly this calendar day, from 00:00 to 23:59.</p>
+    </div>
+
+    <div class="form-group" id="weekly-fields" style="display: none;">
+      <label for="start_date">Period start</label>
+      <input type="date" name="start_date" id="start_date">
+      <label for="date_weekly">Period end</label>
+      <input type="date" name="date" id="date_weekly" value="{{ today }}">
+      <p class="field-hint">
+        Leave "Period start" blank for the default 7-day period ending on the date you choose.
+        Set it explicitly to scan any custom period -- e.g. 10 days covering a specific event.
+      </p>
+    </div>
+
+    <button type="submit" class="btn btn-primary" id="submit-btn">Run scan</button>
+  </form>
+
+  <script>
+    function toggleMode() {
+      const isWeekly = document.querySelector('input[name="mode"]:checked').value === 'weekly';
+      document.getElementById('daily-fields').style.display = isWeekly ? 'none' : 'block';
+      document.getElementById('weekly-fields').style.display = isWeekly ? 'block' : 'none';
+
+      // Only one #date-labeled field should actually submit as "date" at a time --
+      // disable the hidden one so its value doesn't get posted by mistake.
+      document.getElementById('date').disabled = isWeekly;
+      document.getElementById('date_weekly').disabled = !isWeekly;
+      document.getElementById('start_date').disabled = !isWeekly;
+    }
+
+    document.getElementById('scan-form').addEventListener('submit', function () {
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Running scan... this may take a moment';
+    });
+
+    toggleMode();
+  </script>
+{% endblock %}

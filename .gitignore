@@ -1,4 +1,3 @@
-@"
 # Generated data -- not source code, shouldn't be versioned
 media_monitor.db
 output/
@@ -19,4 +18,3 @@ env/
 .vscode/
 .idea/
 .DS_Store
-"@ | Out-File -FilePath .gitignore -Encoding utf8

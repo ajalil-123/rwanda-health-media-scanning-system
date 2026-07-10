@@ -40,11 +40,89 @@ DIRECT_RSS_FEEDS = [
         "category": "local_online",
         "verified": True,
     },
-    # -- Add more as they are confirmed during the source audit, e.g.:
-    # {"name": "KT Press", "url": "https://ktpress.rw/feed/", "language": "en",
-    #  "category": "local_online", "verified": False},
-    # {"name": "IGIHE", "url": "https://en.igihe.com/spip.php?page=backend",
+    {
+        "name": "KT Press",
+        "url": "https://www.ktpress.rw/feed/",
+        "language": "en",
+        "category": "local_online",
+        "verified": True,  # confirmed: returns application/rss+xml with real content
+    },
+    {
+        "name": "Taarifa",
+        "url": "https://taarifa.rw/feed/",
+        "language": "en",
+        "category": "local_online",
+        "verified": True,  # confirmed: returns application/rss+xml with real content
+    },
+    # -- Found during the source audit but NOT yet confirmed working --
+    # extend the audit before trusting these in production:
+    #
+    # Imvaho Nshya: feed URL below is commonly cited (WordPress-style
+    # /feed/), but a direct fetch attempt returned a server error during
+    # verification -- could be transient, could be blocking automated
+    # requests. Re-check before enabling.
+    # {"name": "Imvaho Nshya", "url": "https://imvahonshya.co.rw/feed/",
+    #  "language": "rw", "category": "local_online", "verified": False},
+    #
+    # Rwanda Today (Nation Media Group): feed URL below is cited by
+    # FeedSpot's curated list, but the site's robots.txt disallows
+    # automated fetching -- adding this would mean ignoring their stated
+    # crawling policy. Worth a manual/legal check before enabling, not a
+    # technical one.
+    # {"name": "Rwanda Today", "url": "https://rwandatoday.africa/service/rss/rwanda/2464348/feed.rss",
     #  "language": "en", "category": "local_online", "verified": False},
+    #
+    # IGIHE: no reliable feed found. The English subdomain en2.igihe.com
+    # exposes a WordPress feed, but its output is corrupted by leaked PHP
+    # warnings printed before the XML declaration, which will fail to
+    # parse. igihe.com itself (the main Kinyarwanda site) runs on SPIP,
+    # which usually exposes a feed via ?page=backend -- unconfirmed, needs
+    # a follow-up check.
+    #
+    # Still to check: Panorama, Kigali Today, Umuseke, Le Canape,
+    # La Nouvelle Releve, The Chronicles.
+]
+
+# ---------------------------------------------------------------------------
+# Web scraping for local outlets with no working RSS feed (see
+# collectors/web_scraper.py for how these are used, and read its module
+# docstring before adding a new site -- it explains the generic heuristic
+# and how to find a precise `link_selector` for a specific site).
+#
+# `link_selector` is a CSS selector (e.g. "h2.entry-title a") pointing at
+# the <a> tags a site uses for its headline links on its homepage/listing
+# page. Leave it as None to use the generic heuristic (works out of the
+# box but noisier) until someone inspects the real page and fills it in.
+# ---------------------------------------------------------------------------
+SCRAPE_SITES = [
+    {
+        "name": "IGIHE",
+        "url": "https://en.igihe.com/",
+        "language": "en",
+        "category": "local_online",
+        "link_selector": None,  # not yet inspected -- see collectors/web_scraper.py
+    },
+    {
+        "name": "Panorama",
+        "url": "https://panorama.rw/",
+        "language": "rw",
+        "category": "local_online",
+        "link_selector": None,  # not yet inspected
+    },
+    {
+        "name": "Kigali Today",
+        "url": "https://www.kigalitoday.com/amakuru/",
+        "language": "rw",
+        "category": "local_online",
+        "link_selector": None,  # not yet inspected
+    },
+    {
+        "name": "The Chronicles",
+        "url": "https://www.chronicles.rw/",
+        "language": "en",
+        "category": "local_online",
+        "link_selector": None,  # not yet inspected
+    },
 ]
 
 # ---------------------------------------------------------------------------
