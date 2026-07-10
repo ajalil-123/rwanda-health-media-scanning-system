@@ -24,7 +24,12 @@ import report_generator  # noqa: E402
 import scan as scan_module  # noqa: E402
 
 app = Flask(__name__)
-app.secret_key = "dev-only-not-used-for-anything-sensitive"  # fine for a local-only tool
+app.secret_key = os.environ.get("SECRET_KEY", "dev-only-not-used-for-anything-sensitive")
+
+# Runs at import time so the tables exist whether the app is started via
+# `python webapp/app.py` (local dev) or imported by gunicorn (production) --
+# the __main__ block below is skipped entirely under gunicorn.
+db.init_db()
 
 CATEGORY_LABELS = {
     "local_online": "Local Media - Online",
@@ -60,6 +65,15 @@ def view_scan(scan_id):
         grouped[cat].sort(key=lambda i: (i["highlight_score"] or 0), reverse=True)
 
     included_count = sum(1 for i in items if i.get("included") == 1)
+    
+    # Parse and prepare source_counts from scan's stored JSON
+    import json
+    source_counts = {}
+    if scan_info.get("source_counts"):
+        try:
+            source_counts = json.loads(scan_info["source_counts"]) if isinstance(scan_info["source_counts"], str) else scan_info["source_counts"]
+        except (json.JSONDecodeError, TypeError):
+            source_counts = {}
 
     return render_template(
         "scan.html",
@@ -69,6 +83,7 @@ def view_scan(scan_id):
         category_order=CATEGORY_ORDER,
         total_items=len(items),
         included_count=included_count,
+        source_counts=source_counts,
     )
 
 
@@ -172,5 +187,4 @@ def generate_report(scan_id):
 
 
 if __name__ == "__main__":
-    db.init_db()
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=int(os.environ.get("PORT", 5000)))

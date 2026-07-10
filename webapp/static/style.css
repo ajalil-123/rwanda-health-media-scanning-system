@@ -274,3 +274,61 @@ textarea {
   opacity: 0.6;
   cursor: wait;
 }
+
+.sources-coverage {
+  margin-top: 30px;
+  padding: 20px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.sources-coverage h2 {
+  color: var(--teal);
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.sources-subtitle {
+  font-size: 13px;
+  color: var(--grey);
+  margin-bottom: 12px;
+}
+
+.sources-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sources-table th, .sources-table td {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sources-table th {
+  background: var(--light-grey);
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.sources-table tr:last-child td {
+  border-bottom: none;
+}
+
+.source-name {
+  font-weight: 500;
+}
+
+.unique-count {
+  font-weight: 600;
+}
+
+.source-has-items {
+  background: var(--green-bg);
+}
+
+.source-zero td {
+  color: #aaa;
+}

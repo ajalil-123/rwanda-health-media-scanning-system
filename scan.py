@@ -172,6 +172,46 @@ def run_scan(mode, target_date=None, start_date=None, db_path=None):
         category_counts[item["source_category"]] = category_counts.get(item["source_category"], 0) + 1
     logger.info("By section: %s", category_counts or "(none)")
 
+    # Per-source breakdown: track every configured source through all stages,
+    # even those that returned nothing, so we can show the user "we checked
+    # Google News, direct RSS, web scrapers, and PubMed -- here's what each found."
+    source_counts = {}
+
+    # Initialize with all configured sources set to zero (we'll increment below).
+    for q in config.GOOGLE_NEWS_QUERIES:
+        source_counts.setdefault("Google News", {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+    for feed in config.DIRECT_RSS_FEEDS:
+        source_counts.setdefault(feed["name"], {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+    for site in config.SCRAPE_SITES:
+        source_counts.setdefault(site["name"], {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+    source_counts.setdefault("PubMed", {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+
+    # Count through each stage.
+    for item in raw_items:
+        source = item.get("source_name", "Unknown")
+        source_counts.setdefault(source, {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+        source_counts[source]["collected"] += 1
+
+    for item in windowed_items:
+        source = item.get("source_name", "Unknown")
+        source_counts[source]["windowed"] += 1
+
+    for item in relevant_items:
+        source = item.get("source_name", "Unknown")
+        source_counts[source]["relevant"] += 1
+
+    for item in unique_items:
+        source = item.get("source_name", "Unknown")
+        source_counts[source]["unique"] += 1
+
+    logger.info("Per-source breakdown:")
+    for source in sorted(source_counts.keys()):
+        counts = source_counts[source]
+        logger.info(
+            "  %s: %d collected, %d windowed, %d relevant, %d unique",
+            source, counts["collected"], counts["windowed"], counts["relevant"], counts["unique"],
+        )
+
     # 5. Score for Highlights -------------------------------------------------
     ranked_items = highlight_score.rank_items(unique_items, now=window_end)
 
@@ -199,7 +239,7 @@ def run_scan(mode, target_date=None, start_date=None, db_path=None):
     db.finish_scan(
         scan_id, finished_at.isoformat(),
         raw_items=len(raw_items), relevant_items=len(relevant_items), unique_items=len(unique_items),
-        db_path=db_path,
+        source_counts=source_counts, db_path=db_path,
     )
 
     # 7. Export shortlist for editorial review --------------------------------
@@ -230,6 +270,7 @@ def run_scan(mode, target_date=None, start_date=None, db_path=None):
             "relevant_items": len(relevant_items),
             "unique_items": len(unique_items),
             "category_counts": category_counts,
+            "source_counts": source_counts,
         },
     }
 

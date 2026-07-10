@@ -92,6 +92,18 @@ pip install -r requirements.txt   # requests + flask
 
 No API keys, no paid accounts, no cloud services required for this phase.
 
+## Sources Coverage — knowing which websites were checked
+
+On every scan's review page, below the shortlist, there's a **Sources Coverage** table showing which websites were actually queried and how many relevant health items came from each. This includes sources with zero items so you can see "we checked Google News, The New Times, KT Press, Taarifa, IGIHE, Panorama, Kigali Today, The Chronicles, web scrapers, and PubMed — here's what each found."
+
+The table tracks four stages for each source:
+- **Collected** — items the source returned (before any filtering)
+- **In Window** — items that fell within your requested date range
+- **Relevant** — items matching the health keyword list
+- **Unique (Shortlist)** — items remaining after deduplication
+
+So if Google News shows "Collected: 145, In Window: 12, Relevant: 0, Unique: 0" — you know it worked, returned content for the right date, but nothing matched health keywords that day. That's very different from "Collected: 0" which means a network/access issue.
+
 ## Scraping sites with no working RSS feed
 
 For local outlets that don't have a reliable feed (IGIHE, Panorama, Kigali

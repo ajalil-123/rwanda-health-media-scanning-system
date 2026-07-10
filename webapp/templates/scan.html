@@ -62,6 +62,36 @@
     </div>
   </form>
 
+  <div class="sources-coverage">
+    <h2>Sources Coverage</h2>
+    <p class="sources-subtitle">
+      Which websites were checked and how many relevant items came from each,
+      including those with zero (so you know they were checked but found nothing health-related).
+    </p>
+    <table class="sources-table">
+      <thead>
+        <tr>
+          <th>Website / Source</th>
+          <th title="Items returned by this source">Collected</th>
+          <th title="Items within the date window">In Window</th>
+          <th title="Items matching health keywords">Relevant</th>
+          <th title="Unique items (after deduplication)">Unique (Shortlist)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for source, counts in source_counts.items() | sort %}
+        <tr class="{% if counts.unique > 0 %}source-has-items{% else %}source-zero{% endif %}">
+          <td class="source-name">{{ source }}</td>
+          <td>{{ counts.collected }}</td>
+          <td>{{ counts.windowed }}</td>
+          <td>{{ counts.relevant }}</td>
+          <td class="unique-count">{{ counts.unique }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
   <div class="generate-bar">
     <p class="generate-note">Save your review first, then generate the Word report from everything marked "Include."</p>
     <a class="btn btn-generate" href="{{ url_for('generate_report', scan_id=scan.id) }}">Generate Word Report</a>

@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS scans (
     finished_at TEXT,
     raw_items_collected INTEGER DEFAULT 0,
     relevant_items INTEGER DEFAULT 0,
-    unique_items INTEGER DEFAULT 0
+    unique_items INTEGER DEFAULT 0,
+    source_counts TEXT                    -- JSON: {"source_name": {"collected": N, "windowed": N, "relevant": N, "unique": N}, ...}
 );
 
 CREATE INDEX IF NOT EXISTS idx_items_scan_id ON items(scan_id);
@@ -59,6 +60,7 @@ _MIGRATION_COLUMNS = [
     ("items", "covered_by", "TEXT"),
     ("items", "included", "INTEGER"),
     ("items", "editor_summary", "TEXT"),
+    ("scans", "source_counts", "TEXT"),
 ]
 
 
@@ -127,13 +129,15 @@ def start_scan(mode, window_start, window_end, started_at, db_path=None):
         return cur.lastrowid
 
 
-def finish_scan(scan_id, finished_at, raw_items, relevant_items, unique_items, db_path=None):
+def finish_scan(scan_id, finished_at, raw_items, relevant_items, unique_items, source_counts=None, db_path=None):
+    import json
     with get_connection(db_path) as conn:
+        source_counts_json = json.dumps(source_counts) if source_counts else None
         conn.execute(
             """UPDATE scans
-               SET finished_at = ?, raw_items_collected = ?, relevant_items = ?, unique_items = ?
+               SET finished_at = ?, raw_items_collected = ?, relevant_items = ?, unique_items = ?, source_counts = ?
                WHERE id = ?""",
-            (finished_at, raw_items, relevant_items, unique_items, scan_id),
+            (finished_at, raw_items, relevant_items, unique_items, source_counts_json, scan_id),
         )
 
 
@@ -197,9 +201,19 @@ def get_included_items(scan_id, db_path=None):
 
 
 def get_scan(scan_id, db_path=None):
+    import json
     with get_connection(db_path) as conn:
         row = conn.execute("SELECT * FROM scans WHERE id = ?", (scan_id,)).fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        scan_dict = dict(row)
+        # Parse source_counts JSON if present
+        if scan_dict.get("source_counts"):
+            try:
+                scan_dict["source_counts"] = json.loads(scan_dict["source_counts"])
+            except (json.JSONDecodeError, TypeError):
+                scan_dict["source_counts"] = {}
+        return scan_dict
 
 
 def list_scans(db_path=None):

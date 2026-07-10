@@ -159,6 +159,26 @@ before assuming it's a keyword or source-list problem, since it could
 just as easily be a network-access issue in a particular deployment
 environment.
 
+## Sources coverage tracking — knowing which websites were checked
+
+Added per-source tracking through each pipeline stage so every scan
+persists (to `scans.source_counts` as JSON) a breakdown showing:
+- Which configured sources were queried (Google News, all Direct RSS feeds,
+  all Web Scraper sites, PubMed) — even if they returned zero items
+- How many items each source contributed at each stage: collected, windowed,
+  relevant, and unique (after dedup)
+
+Displayed on the scan review page in a "Sources Coverage" table below the
+shortlist. Solves the ambiguity the user reported earlier: if a source
+shows "Collected: 0", that's a network/access problem; if "Collected: 145,
+Relevant: 0", it worked but nothing matched keywords that day.
+
+Implementation: db.finish_scan now accepts source_counts as a parameter
+(JSON serialized), stored in a new `scans.source_counts` column added via
+the existing migration system (auto-detects old schema and adds it if
+missing on next run). The Flask view_scan route fetches and deserializes
+this for template display. All 78 tests pass after adding this feature.
+
 ## Web scraper collector for sites without RSS (IGIHE, Panorama, Kigali Today, The Chronicles)
 
 Added `collectors/web_scraper.py` as a fourth collector, specifically to
