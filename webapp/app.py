@@ -229,5 +229,9 @@ def generate_report(scan_id):
 
 
 if __name__ == "__main__":
+    import os
     db.init_db()
-    app.run(debug=True, port=5000)
+    # In production, gunicorn will handle the PORT env var via Procfile
+    # In development, use port 5000
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
