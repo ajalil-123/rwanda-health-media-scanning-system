@@ -81,6 +81,10 @@ def main():
     with patch("collectors.google_news.collect", return_value=[]), \
          patch("collectors.direct_rss.collect", return_value=fixture_items), \
          patch("collectors.web_scraper.collect", return_value=[]), \
+         patch("collectors.international_news.collect", return_value=[]), \
+         patch("collectors.official_sources.collect", return_value=[]), \
+         patch("collectors.academic_sources.collect", return_value=[]), \
+         patch("collectors.twitter.collect", return_value=[]), \
          patch("collectors.pubmed.collect", return_value=[]):
 
         result = scan.run_scan("daily", target_date=now, db_path=db_path)

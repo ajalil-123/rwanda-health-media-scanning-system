@@ -144,7 +144,7 @@ def finish_scan(scan_id, finished_at, raw_items, relevant_items, unique_items, s
 def insert_item(item, scan_id, db_path=None):
     """
     item: dict with keys source_name, source_category, title, url, language,
-    published_at, matched_keywords (list), snippet, highlight_score (optional),
+    published_at (datetime object or ISO string), matched_keywords (list), snippet, highlight_score (optional),
     covered_by (optional list).
 
     Returns the new item's id, or None if the URL already existed (so we
@@ -152,6 +152,12 @@ def insert_item(item, scan_id, db_path=None):
     """
     with get_connection(db_path) as conn:
         try:
+            # Convert datetime objects to ISO format strings for database storage
+            published_at = item.get("published_at")
+            if published_at is not None:
+                if hasattr(published_at, 'isoformat'):  # It's a datetime object
+                    published_at = published_at.isoformat()
+            
             cur = conn.execute(
                 """INSERT INTO items
                    (source_name, source_category, title, url, language, published_at,
@@ -163,7 +169,7 @@ def insert_item(item, scan_id, db_path=None):
                     item["title"],
                     item["url"],
                     item.get("language"),
-                    item.get("published_at"),
+                    published_at,
                     item["fetched_at"],
                     ",".join(item.get("matched_keywords", [])),
                     item.get("snippet", ""),

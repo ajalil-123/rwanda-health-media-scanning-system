@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Sources Dashboard -- Rwanda Health Media Scanning System{% endblock %}
+
+{% block content %}
+  <a class="back-link" href="{{ url_for('view_scan', scan_id=scan.id) }}">&larr; Back to scan</a>
+
+  <h1>📊 Sources Dashboard</h1>
+  <p class="subtitle">
+    Which websites were checked during this scan and how many relevant items they contributed at each stage.
+  </p>
+
+  <div class="dashboard-summary">
+    <div class="summary-stat">
+      <div class="stat-value">{{ total_counts.collected }}</div>
+      <div class="stat-label">Items Collected</div>
+      <div class="stat-hint">From all sources combined</div>
+    </div>
+    <div class="summary-stat">
+      <div class="stat-value">{{ total_counts.windowed }}</div>
+      <div class="stat-label">In Date Window</div>
+      <div class="stat-hint">Within {{ scan.window_start[:10] }} to {{ scan.window_end[:10] }}</div>
+    </div>
+    <div class="summary-stat">
+      <div class="stat-value">{{ total_counts.relevant }}</div>
+      <div class="stat-label">Health Relevant</div>
+      <div class="stat-hint">Matched keyword filters</div>
+    </div>
+    <div class="summary-stat">
+      <div class="stat-value">{{ total_counts.unique }}</div>
+      <div class="stat-label">Unique (Shortlist)</div>
+      <div class="stat-hint">After deduplication</div>
+    </div>
+  </div>
+
+  <!-- Search Engines -->
+  {% if sources_by_category.search %}
+  <div class="dashboard-section">
+    <h2 class="section-title">🔍 Search & News Aggregators</h2>
+    <div class="sources-grid">
+      {% for source, counts in sources_by_category.search %}
+      <div class="source-card">
+        <div class="source-header">
+          <h3>{{ source }}</h3>
+          {% if counts.unique > 0 %}
+            <span class="badge badge-active">{{ counts.unique }} items in shortlist</span>
+          {% else %}
+            <span class="badge badge-zero">No items</span>
+          {% endif %}
+        </div>
+        <div class="source-flow">
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.collected }}</div>
+            <div class="flow-label">Collected</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.windowed }}</div>
+            <div class="flow-label">In Window</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.relevant }}</div>
+            <div class="flow-label">Relevant</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight">
+            <div class="flow-value">{{ counts.unique }}</div>
+            <div class="flow-label">Unique</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Direct RSS Feeds -->
+  {% if sources_by_category.direct_rss %}
+  <div class="dashboard-section">
+    <h2 class="section-title">📰 Direct RSS Feeds</h2>
+    <div class="sources-grid">
+      {% for source, counts in sources_by_category.direct_rss %}
+      <div class="source-card">
+        <div class="source-header">
+          <h3>{{ source }}</h3>
+          {% if counts.unique > 0 %}
+            <span class="badge badge-active">{{ counts.unique }} items in shortlist</span>
+          {% else %}
+            <span class="badge badge-zero">No items</span>
+          {% endif %}
+        </div>
+        <div class="source-flow">
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.collected }}</div>
+            <div class="flow-label">Collected</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.windowed }}</div>
+            <div class="flow-label">In Window</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.relevant }}</div>
+            <div class="flow-label">Relevant</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight">
+            <div class="flow-value">{{ counts.unique }}</div>
+            <div class="flow-label">Unique</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Web Scraper Sites -->
+  {% if sources_by_category.web_scraper %}
+  <div class="dashboard-section">
+    <h2 class="section-title">🕷️ Web Scraper Sites</h2>
+    <div class="sources-grid">
+      {% for source, counts in sources_by_category.web_scraper %}
+      <div class="source-card">
+        <div class="source-header">
+          <h3>{{ source }}</h3>
+          {% if counts.unique > 0 %}
+            <span class="badge badge-active">{{ counts.unique }} items in shortlist</span>
+          {% else %}
+            <span class="badge badge-zero">No items</span>
+          {% endif %}
+        </div>
+        <div class="source-flow">
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.collected }}</div>
+            <div class="flow-label">Collected</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.windowed }}</div>
+            <div class="flow-label">In Window</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.relevant }}</div>
+            <div class="flow-label">Relevant</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight">
+            <div class="flow-value">{{ counts.unique }}</div>
+            <div class="flow-label">Unique</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Research & Journals -->
+  {% if sources_by_category.research %}
+  <div class="dashboard-section">
+    <h2 class="section-title">📚 Research & Journals</h2>
+    <div class="sources-grid">
+      {% for source, counts in sources_by_category.research %}
+      <div class="source-card">
+        <div class="source-header">
+          <h3>{{ source }}</h3>
+          {% if counts.unique > 0 %}
+            <span class="badge badge-active">{{ counts.unique }} items in shortlist</span>
+          {% else %}
+            <span class="badge badge-zero">No items</span>
+          {% endif %}
+        </div>
+        <div class="source-flow">
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.collected }}</div>
+            <div class="flow-label">Collected</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.windowed }}</div>
+            <div class="flow-label">In Window</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-value">{{ counts.relevant }}</div>
+            <div class="flow-label">Relevant</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight">
+            <div class="flow-value">{{ counts.unique }}</div>
+            <div class="flow-label">Unique</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="dashboard-help">
+    <h3>How to read this dashboard</h3>
+    <p>
+      Each source shows how many items it contributed at each stage:
+      <strong>Collected</strong> (what the source returned) →
+      <strong>In Window</strong> (matched your date range) →
+      <strong>Relevant</strong> (matched health keywords) →
+      <strong>Unique</strong> (after removing duplicates).
+    </p>
+    <p>
+      If a source shows 0 collected, it either wasn't accessible (check terminal logs) or returned nothing for that date.
+      If it shows items collected but 0 relevant, nothing matched the health keyword list that day.
+    </p>
+  </div>
+
+  <div class="dashboard-footer">
+    <a href="{{ url_for('view_scan', scan_id=scan.id) }}" class="btn">← Back to Scan Review</a>
+  </div>
+{% endblock %}

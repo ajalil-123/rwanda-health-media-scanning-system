@@ -108,3 +108,134 @@ def _text(el, tag, ns=None):
     if found is not None and found.text:
         return found.text.strip()
     return None
+
+
+def extract_date_from_html(element_text):
+    """
+    Try to parse a date from HTML text.
+    Handles various common formats: "July 14, 2026", "2026-07-14", "14/07/2026", etc.
+    Returns datetime object or None.
+    """
+    import re
+
+    if not element_text:
+        return None
+
+    text = str(element_text).strip()
+    if not text or len(text) > 200:  # Skip very long strings
+        return None
+
+    # Common date patterns (most specific first)
+    patterns = [
+        # ISO format: 2026-07-14 or 2026-07-14 10:30 or 2026-07-14T10:30
+        (r"(\d{4}-\d{2}-\d{2})[\sT]?(\d{2}:\d{2}(?::\d{2})?)?", "%Y-%m-%d"),
+        # US format: July 14, 2026 or Jul 14, 2026
+        (r"([A-Z][a-z]{2,8}\.?\s+\d{1,2},?\s+\d{4})", "%B %d, %Y"),
+        # European format: 14/07/2026 or 14.07.2026 or 14-07-2026
+        (r"(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4})", "%d/%m/%Y"),
+        # Short format: 14 Jul 2026
+        (r"(\d{1,2}\s+[A-Z][a-z]{2}\s+\d{4})", "%d %b %Y"),
+        # "Posted Jul 14" or "Published July 14, 2026"
+        (r"(?:Posted|Published|Updated)?\s+([A-Z][a-z]{2,8}\.?\s+\d{1,2},?\s+\d{4})", "%B %d, %Y"),
+    ]
+
+    for pattern, date_fmt in patterns:
+        match = re.search(pattern, text)
+        if match:
+            date_str = match.group(1)
+            try:
+                parsed = datetime.strptime(date_str, date_fmt)
+                # Add UTC timezone
+                parsed = parsed.replace(tzinfo=timezone.utc)
+                return parsed
+            except ValueError:
+                pass
+
+    return None
+
+
+def extract_date_from_element(soup_element):
+    """
+    Try to extract a date from a BeautifulSoup element.
+    Checks common date indicator classes, attributes, and meta tags.
+    Returns datetime object or None.
+    """
+    from bs4 import BeautifulSoup
+
+    if not soup_element:
+        return None
+
+    # If it's a string, parse it
+    if isinstance(soup_element, str):
+        soup_element = BeautifulSoup(soup_element, "html.parser")
+
+    # Try <time> element first (most reliable, HTML5 standard)
+    time_elem = soup_element.find("time")
+    if time_elem:
+        # Check datetime attribute first
+        if time_elem.get("datetime"):
+            date_obj = parse_rss_datetime(time_elem.get("datetime"))
+            if date_obj:
+                return date_obj
+        # Try text content
+        text = time_elem.get_text(strip=True)
+        if text:
+            date_obj = extract_date_from_html(text)
+            if date_obj:
+                return date_obj
+
+    # Try common class/id patterns for date elements
+    date_class_names = [
+        "published-date",
+        "publish-date",
+        "posted-date",
+        "post-date",
+        "article-date",
+        "entry-date",
+        "date-posted",
+        "dateline",
+        "timestamp",
+        "meta-date",
+    ]
+
+    for class_name in date_class_names:
+        elem = soup_element.find(class_=class_name)
+        if elem:
+            # Try datetime attribute first
+            if elem.get("datetime"):
+                date_obj = parse_rss_datetime(elem.get("datetime"))
+                if date_obj:
+                    return date_obj
+            # Try text content
+            text = elem.get_text(strip=True)
+            if text:
+                date_obj = extract_date_from_html(text)
+                if date_obj:
+                    return date_obj
+
+    # Try meta tags (Open Graph, Twitter Card, schema.org, etc.)
+    meta_patterns = [
+        ("property", "article:published_time"),
+        ("property", "article:modified_time"),
+        ("name", "publish_date"),
+        ("name", "article.published"),
+        ("name", "dc.date"),
+        ("name", "date"),
+    ]
+
+    for attr_name, attr_value in meta_patterns:
+        meta = soup_element.find("meta", {attr_name: attr_value})
+        if meta and meta.get("content"):
+            date_obj = parse_rss_datetime(meta.get("content"))
+            if date_obj:
+                return date_obj
+
+    # Last resort: look for text patterns in common locations
+    for elem in soup_element.find_all(["span", "p", "div", "small"], limit=10):
+        text = elem.get_text(strip=True)
+        if text and len(text) < 50:  # Date text is usually short
+            date_obj = extract_date_from_html(text)
+            if date_obj:
+                return date_obj
+
+    return None

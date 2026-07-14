@@ -656,11 +656,15 @@ class TestScanDiagnostics(unittest.TestCase):
         with unittest.mock.patch("collectors.google_news.collect", return_value=[]), \
              unittest.mock.patch("collectors.direct_rss.collect", return_value=[]), \
              unittest.mock.patch("collectors.web_scraper.collect", return_value=[]), \
+             unittest.mock.patch("collectors.international_news.collect", return_value=[]), \
+             unittest.mock.patch("collectors.official_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.academic_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.twitter.collect", return_value=[]), \
              unittest.mock.patch("collectors.pubmed.collect", return_value=[]):
             result = scan.run_scan("daily", target_date=date(2026, 7, 10), db_path=self.db_path)
         diag = result["diagnostics"]
         self.assertEqual(diag["raw_items"], 0)
-        self.assertEqual(diag["collector_counts"], {"google_news": 0, "direct_rss": 0, "web_scraper": 0, "pubmed": 0})
+        self.assertEqual(diag["collector_counts"], {"google_news": 0, "direct_rss": 0, "web_scraper": 0, "international_news": 0, "official_sources": 0, "academic_sources": 0, "twitter": 0, "pubmed": 0})
 
     def test_diagnostics_distinguish_windowed_out_from_never_collected(self):
         """Items collected but all outside the date window should show up
@@ -674,6 +678,10 @@ class TestScanDiagnostics(unittest.TestCase):
         with unittest.mock.patch("collectors.google_news.collect", return_value=[old_item]), \
              unittest.mock.patch("collectors.direct_rss.collect", return_value=[]), \
              unittest.mock.patch("collectors.web_scraper.collect", return_value=[]), \
+             unittest.mock.patch("collectors.international_news.collect", return_value=[]), \
+             unittest.mock.patch("collectors.official_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.academic_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.twitter.collect", return_value=[]), \
              unittest.mock.patch("collectors.pubmed.collect", return_value=[]):
             result = scan.run_scan("daily", target_date=date(2026, 7, 10), db_path=self.db_path)
         diag = result["diagnostics"]
@@ -691,6 +699,10 @@ class TestScanDiagnostics(unittest.TestCase):
         with unittest.mock.patch("collectors.google_news.collect", return_value=[football_item]), \
              unittest.mock.patch("collectors.direct_rss.collect", return_value=[]), \
              unittest.mock.patch("collectors.web_scraper.collect", return_value=[]), \
+             unittest.mock.patch("collectors.international_news.collect", return_value=[]), \
+             unittest.mock.patch("collectors.official_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.academic_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.twitter.collect", return_value=[]), \
              unittest.mock.patch("collectors.pubmed.collect", return_value=[]):
             result = scan.run_scan("daily", target_date=date(2026, 7, 10), db_path=self.db_path)
         diag = result["diagnostics"]
@@ -709,6 +721,10 @@ class TestScanDiagnostics(unittest.TestCase):
         with unittest.mock.patch("collectors.google_news.collect", return_value=items), \
              unittest.mock.patch("collectors.direct_rss.collect", return_value=[]), \
              unittest.mock.patch("collectors.web_scraper.collect", return_value=[]), \
+             unittest.mock.patch("collectors.international_news.collect", return_value=[]), \
+             unittest.mock.patch("collectors.official_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.academic_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.twitter.collect", return_value=[]), \
              unittest.mock.patch("collectors.pubmed.collect", return_value=[]):
             result = scan.run_scan("daily", target_date=date(2026, 7, 10), db_path=self.db_path)
         diag = result["diagnostics"]
@@ -723,6 +739,10 @@ class TestScanDiagnostics(unittest.TestCase):
         with unittest.mock.patch("collectors.google_news.collect", side_effect=broken_collector), \
              unittest.mock.patch("collectors.direct_rss.collect", return_value=[]), \
              unittest.mock.patch("collectors.web_scraper.collect", return_value=[]), \
+             unittest.mock.patch("collectors.international_news.collect", return_value=[]), \
+             unittest.mock.patch("collectors.official_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.academic_sources.collect", return_value=[]), \
+             unittest.mock.patch("collectors.twitter.collect", return_value=[]), \
              unittest.mock.patch("collectors.pubmed.collect", return_value=[]):
             result = scan.run_scan("daily", target_date=date(2026, 7, 10), db_path=self.db_path)
         self.assertEqual(result["diagnostics"]["collector_counts"]["google_news"], 0)
@@ -872,7 +892,7 @@ class TestWebScraper(unittest.TestCase):
     def test_relative_urls_are_resolved_to_absolute(self):
         soup = __import__("bs4").BeautifulSoup(self.WORDPRESS_STYLE_HTML, "html.parser")
         found = web_scraper._extract_with_selector(soup, "h2.entry-title a", "https://example.com/news/")
-        for url, _ in found:
+        for url, _, _ in found:
             self.assertTrue(url.startswith("https://example.com/"))
 
     def test_scrape_site_deduplicates_repeated_links_on_same_page(self):

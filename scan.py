@@ -33,7 +33,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import config
 import db
-from collectors import google_news, direct_rss, pubmed, web_scraper
+from collectors import google_news, direct_rss, pubmed, web_scraper, international_news, official_sources, academic_sources, twitter
 from processing import filter_relevance, dedup, highlight_score
 import export
 
@@ -125,6 +125,10 @@ def run_scan(mode, target_date=None, start_date=None, db_path=None):
     raw_items += _run_collector("google_news", google_news.collect)
     raw_items += _run_collector("direct_rss", direct_rss.collect)
     raw_items += _run_collector("web_scraper", web_scraper.collect)
+    raw_items += _run_collector("international_news", international_news.collect)
+    raw_items += _run_collector("official_sources", official_sources.collect)
+    raw_items += _run_collector("academic_sources", academic_sources.collect)
+    raw_items += _run_collector("twitter", twitter.collect)
     raw_items += _run_collector("pubmed", lambda: pubmed.collect(window_start, window_end))
 
     logger.info("Collected %d raw items across all collectors", len(raw_items))
@@ -184,7 +188,14 @@ def run_scan(mode, target_date=None, start_date=None, db_path=None):
         source_counts.setdefault(feed["name"], {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
     for site in config.SCRAPE_SITES:
         source_counts.setdefault(site["name"], {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+    for source in config.INTERNATIONAL_SOURCES:
+        source_counts.setdefault(source["name"], {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+    for source in config.OFFICIAL_SOURCES:
+        source_counts.setdefault(source["name"], {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+    for source in config.RESEARCH_SOURCES:
+        source_counts.setdefault(source["name"], {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
     source_counts.setdefault("PubMed", {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
+    source_counts.setdefault("Twitter", {"collected": 0, "windowed": 0, "relevant": 0, "unique": 0})
 
     # Count through each stage.
     for item in raw_items:

@@ -161,6 +161,180 @@ Both act directly on `media_monitor.db` -- there's no undo, so use them
 deliberately. Generated report/shortlist files in `output/` are not
 deleted automatically; clean those up separately if needed.
 
+## Data Sources & Collection
+
+The system now collects health news from **8 different sources** across news, research, government, and social media:
+
+### 1. **Google News RSS** (Broad Discovery)
+- 5 multilingual queries: "health Rwanda", "Rwanda hospital", "ubuzima Rwanda", etc.
+- Catches major international outlets automatically
+- ~100-150 items per scan
+
+### 2. **Direct RSS Feeds** (Verified Local Outlets)
+- The New Times
+- KT Press
+- Taarifa
+- ~20-50 items total
+
+### 3. **Web Scrapers** (Outlets Without RSS)
+- Local: IGIHE, Panorama, Kigali Today, The Chronicles
+- International: Reuters, BBC, AFP, Al Jazeera, France 24, DW, Africanews
+- Official: Rwanda Ministry of Health, RBC, WHO Rwanda
+- ~30-50 items total
+
+### 4. **PubMed** (Research & Journals)
+- Academic papers, journal articles
+- ~0-10 items per scan
+
+### 5. **Academic Sources** (NEW)
+- Google Scholar (Rwanda health)
+- ResearchGate (Rwanda health research)
+- SSRN (Rwanda health policy/economics)
+- arXiv (Rwanda)
+- ~0-20 items per scan
+
+### 6. **Social Media** (NEW - Twitter/X)
+- Configured accounts: @RwandaHealth, @RBCRwanda, @WHORwanda, etc.
+- Hashtags: #RBAAmakuru, #RwandaHealth, #ubuzima, etc.
+- Requires dedicated RBC X account (see "Twitter Configuration" below)
+
+### 7. **Official Sources** (NEW)
+- Rwanda Ministry of Health announcements
+- Rwanda Biomedical Centre news
+- WHO Rwanda country page
+- ~5-15 items per scan
+
+### 8. **International News** (NEW)
+- Reuters Africa
+- BBC News Africa
+- AFP
+- Al Jazeera
+- France 24
+- DW News
+- Africanews
+- Filtered to show only Rwanda-related stories
+- ~5-20 items per scan
+
+---
+
+## Configuration
+
+All sources are configured in `config.py`. To add, modify, or disable sources:
+
+### Add an International Outlet
+```python
+INTERNATIONAL_SOURCES = [
+    {
+        "name": "Your Outlet Name",
+        "url": "https://example.com/news/",
+        "language": "en",
+        "category": "international",
+        "link_selector": "h2.headline a",  # CSS selector for article links
+    },
+]
+```
+
+### Add an Official Source
+```python
+OFFICIAL_SOURCES = [
+    {
+        "name": "Your Organization",
+        "url": "https://example.org/announcements/",
+        "language": "en",
+        "category": "local_online",
+        "link_selector": None,  # Will use generic scraper if None
+    },
+]
+```
+
+### Add a Research Source
+```python
+RESEARCH_SOURCES = [
+    {
+        "name": "My Research Database",
+        "url": "https://example.org/search",
+        "query": "Rwanda health",
+        "source": "custom_scraper",  # identify the type
+    },
+]
+```
+
+### Twitter Configuration (Optional)
+
+To enable Twitter/X monitoring:
+
+1. Create a dedicated RBC account (not your personal account) on X
+2. Add to `config.py`:
+```python
+TWITTER_EMAIL = "rbc.health@example.com"
+TWITTER_PASSWORD = "your_password_here"
+# Optional: TOTP secret for 2FA
+TWITTER_TOTP_SECRET = "your_totp_secret"
+
+SOCIAL_MEDIA_ACCOUNTS = {
+    "twitter": [
+        "@RwandaHealth",
+        "@RBCRwanda",
+        "@WHORwanda",
+    ],
+    "hashtags": [
+        "#RBAAmakuru",
+        "#RwandaHealth",
+    ],
+}
+```
+
+3. First run will require interactive verification; subsequent runs use cached auth
+4. Install Twikit: `pip install twikit`
+
+---
+
+## Finding CSS Selectors
+
+To configure web scrapers for a new site with a precise CSS selector:
+
+1. Open the website in your browser
+2. Right-click on a headline → "Inspect Element"
+3. Look for the pattern, e.g.:
+   - `<h2 class="entry-title"><a href="...">Headline</a></h2>` → selector is `h2.entry-title a`
+   - `<div class="news-item"><a href="...">Headline</a></div>` → selector is `div.news-item a`
+4. Add to the appropriate config section (INTERNATIONAL_SOURCES, OFFICIAL_SOURCES, SCRAPE_SITES)
+5. Test by running a scan and checking the terminal output
+
+## Troubleshooting
+
+### Some sources return 0 items
+
+**Possible reasons:**
+1. Website is blocking automated requests (check terminal for specific error)
+2. No health-related articles on that day
+3. CSS selector is incorrect (change to None to use generic fallback)
+4. Site structure changed (update the selector)
+
+**Solution:** Check the per-source breakdown in the Sources Dashboard to see which stage items are getting filtered out.
+
+### Twitter collector isn't working
+
+**Possible reasons:**
+1. Twikit not installed: `pip install twikit`
+2. Credentials missing from config.py
+3. X account is rate-limited or blocked
+
+**Solution:** Check terminal logs during scan for specific Twikit errors
+
+### Scraper is too noisy
+
+**Problem:** Getting lots of non-health articles
+**Solution:** Make sure the keyword list in `config.KEYWORDS` is comprehensive, or adjust CSS selectors to be more specific
+
+## Scraping Etiquette
+
+When adding new sources:
+- **Respect robots.txt**: Check the site's `/robots.txt` before enabling
+- **Use descriptive User-Agent**: System sends "Rwanda Health Media Monitoring System"
+- **Don't parallelize**: Scraping is sequential, not parallel
+- **Monitor for blocks**: If a source blocks requests, disable it and respect their policy
+
 ## Troubleshooting: "nothing is showing up"
 
 An empty shortlist can mean several different things -- as of this update,

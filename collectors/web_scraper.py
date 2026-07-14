@@ -25,11 +25,11 @@ IMPORTANT, read before enabling a new site:
      `link_selector` for that site in config.SCRAPE_SITES. Once set, the
      generic heuristic is skipped entirely for that site.
 
-  4. No published date is available from a homepage/listing scrape (only
-     from visiting each individual article, which this collector does
-     NOT do, to keep requests low). Items are given published_at=None,
-     which the scan pipeline treats as "keep it, can't rule it out" --
-     appropriate for a homepage listing, since it's implicitly recent.
+  4. Published dates are extracted from HTML where possible (from <time>
+     elements, .published-date classes, meta tags, or date patterns in
+     text). If no date is found, published_at is None, which the scan
+     pipeline treats as "keep it, can't rule it out" -- appropriate for
+     a homepage listing since it's implicitly recent.
 
   5. Be a reasonable citizen: this collector sends a descriptive
      User-Agent (config.USER_AGENT) so a site owner can identify and
@@ -93,7 +93,22 @@ def _extract_with_selector(soup, selector, base_url):
         text = a.get_text(strip=True)
         if not href or not text:
             continue
-        items.append((urljoin(base_url, href), text))
+        
+        # Try to find date info nearby the link
+        # Look in parent containers (article, div, li, etc.)
+        date_element = None
+        for parent in a.parents:
+            # Stop at body level
+            if parent.name == "body":
+                break
+            # Try to find date in this parent
+            from collectors.rss_utils import extract_date_from_element
+            test_date = extract_date_from_element(parent)
+            if test_date:
+                date_element = parent
+                break
+        
+        items.append((urljoin(base_url, href), text, date_element))
     return items
 
 
@@ -113,7 +128,17 @@ def _extract_generic(soup, base_url, base_domain):
         href = urljoin(base_url, a["href"])
         text = a.get_text(strip=True)
         if _looks_like_article_link(href, text, base_domain):
-            items.append((href, text))
+            # Try to find date in parent container
+            date_element = None
+            for parent in a.parents:
+                if parent.name == "body":
+                    break
+                from collectors.rss_utils import extract_date_from_element
+                test_date = extract_date_from_element(parent)
+                if test_date:
+                    date_element = parent
+                    break
+            items.append((href, text, date_element))
     return items
 
 
@@ -156,14 +181,20 @@ def scrape_site(site):
     # from multiple spots -- a thumbnail and a title, for instance).
     seen_urls = set()
     items = []
-    for url, title in found:
+    for url, title, date_element in found:
         if url in seen_urls:
             continue
         seen_urls.add(url)
+
+        # Try to extract published date from the article element
+        from collectors.rss_utils import extract_date_from_element
+        published_at = extract_date_from_element(date_element) if date_element else None
+        # extract_date_from_element returns a datetime object, which is what we need
+
         items.append({
             "title": re.sub(r"\s+", " ", title).strip(),
             "url": url,
-            "published_at": None,  # not available from a listing page -- see module docstring
+            "published_at": published_at,  # Keep as datetime object, not string
             "summary": "",
             "source_name": site["name"],
             "source_category": site.get("category", "local_online"),

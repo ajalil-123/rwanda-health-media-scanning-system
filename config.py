@@ -126,6 +126,145 @@ SCRAPE_SITES = [
 ]
 
 # ---------------------------------------------------------------------------
+# International News Sources covering Rwanda & East Africa
+# These are major outlets with broad coverage. Most don't have Rwanda-specific
+# RSS feeds, so they're configured for web scraping (to find Rwanda articles).
+# ---------------------------------------------------------------------------
+INTERNATIONAL_SOURCES = [
+    {
+        "name": "Reuters",
+        "url": "https://www.reuters.com/world/africa/",
+        "language": "en",
+        "category": "international",
+        "link_selector": "h3 a, .heading-article a",  # approximate, needs inspection
+    },
+    {
+        "name": "BBC News Africa",
+        "url": "https://www.bbc.com/news/world/africa/",
+        "language": "en",
+        "category": "international",
+        "link_selector": "h3 a, .sc-2bc9a3a-5 a",  # BBC's class names change; will use generic fallback
+    },
+    {
+        "name": "AFP News",
+        "url": "https://www.afp.com/",
+        "language": "en",
+        "category": "international",
+        "link_selector": None,  # needs inspection
+    },
+    {
+        "name": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/longform/longform/",
+        "language": "en",
+        "category": "international",
+        "link_selector": None,  # needs inspection
+    },
+    {
+        "name": "France 24",
+        "url": "https://www.france24.com/en/africa/",
+        "language": "en",
+        "category": "international",
+        "link_selector": "h3 a, .article-headline a",
+    },
+    {
+        "name": "DW News",
+        "url": "https://www.dw.com/en/africa/s-9077",
+        "language": "en",
+        "category": "international",
+        "link_selector": "h2 a, .teaser-headline a",
+    },
+    {
+        "name": "Africanews",
+        "url": "https://www.africanews.com/",
+        "language": "en",
+        "category": "international",
+        "link_selector": None,  # needs inspection
+    },
+]
+
+# ---------------------------------------------------------------------------
+# Official Government & Health Organization Sources
+# Rwanda Ministry of Health, RBC, WHO Rwanda -- direct from the source
+# ---------------------------------------------------------------------------
+OFFICIAL_SOURCES = [
+    {
+        "name": "Rwanda Ministry of Health",
+        "url": "https://www.moh.gov.rw/",
+        "language": "en",
+        "category": "local_online",
+        "link_selector": None,  # needs inspection of actual site structure
+    },
+    {
+        "name": "Rwanda Biomedical Centre",
+        "url": "https://www.rbc.gov.rw/",
+        "language": "en",
+        "category": "local_online",
+        "link_selector": None,  # needs inspection
+    },
+    {
+        "name": "WHO Rwanda",
+        "url": "https://www.who.int/countries/rwa/",
+        "language": "en",
+        "category": "international",
+        "link_selector": "h3 a, .news-item a",  # WHO's structure varies
+    },
+]
+
+# ---------------------------------------------------------------------------
+# Academic & Research Sources
+# Beyond PubMed: Google Scholar, ResearchGate, SSRN, arXiv. All require
+# web scraping (browser-like requests) due to blocking; use with respect
+# to each site's robots.txt and terms of service.
+# ---------------------------------------------------------------------------
+RESEARCH_SOURCES = [
+    {
+        "name": "Google Scholar Rwanda",
+        "url": "https://scholar.google.com/scholar",
+        "query": "Rwanda health",
+        "source": "google_scholar",
+    },
+    {
+        "name": "ResearchGate Rwanda Health",
+        "url": "https://www.researchgate.net/",
+        "query": "Rwanda health",
+        "source": "researchgate",
+    },
+    {
+        "name": "SSRN Rwanda",
+        "url": "https://papers.ssrn.com/",
+        "query": "Rwanda health policy",
+        "source": "ssrn",
+    },
+    {
+        "name": "arXiv Rwanda",
+        "url": "https://arxiv.org/",
+        "query": "Rwanda health",
+        "source": "arxiv",
+    },
+]
+
+# ---------------------------------------------------------------------------
+# Social Media Accounts to Monitor (future collector)
+# Currently not automatically collected, but a future enhancement could
+# monitor these Twitter accounts and hashtags for health-related tweets.
+# ---------------------------------------------------------------------------
+SOCIAL_MEDIA_ACCOUNTS = {
+    "twitter": [
+        "@RwandaHealth",
+        "@RBCRwanda",
+        "@WHORwanda",
+        "@RwandaHRH",
+        "@MinofHealthRwanda",
+    ],
+    "hashtags": [
+        "#RBAAmakuru",
+        "#RwandaHealth",
+        "#ubuzima",
+        "#sante_rwanda",
+    ],
+}
+
+# ---------------------------------------------------------------------------
 # PubMed E-utilities -- research & journals. Free, no key required for light
 # use (an optional free NCBI API key raises the rate limit).
 # ---------------------------------------------------------------------------
