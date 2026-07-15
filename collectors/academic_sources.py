@@ -32,7 +32,8 @@ def scrape_google_scholar(query="Rwanda health"):
     logger.info("Google Scholar search: %s (note: Google blocks scrapers)", query)
 
     try:
-        html = fetch_url(url, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        # fetch_url doesn't accept user_agent parameter, just use default
+        html = fetch_url(url)
     except Exception as exc:
         logger.warning("Google Scholar scrape failed (expected due to blocking): %s", exc)
         return []
@@ -162,10 +163,13 @@ def scrape_arxiv(query="Rwanda health"):
     arXiv has a free API that doesn't require scraping.
     """
     import urllib.request
+    import urllib.parse
     import json
 
     logger.info("arXiv search: %s", query)
-    search_url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results=10&sortBy=submittedDate&sortOrder=descending"
+    # Properly encode the query to handle spaces and special characters
+    encoded_query = urllib.parse.quote(query)
+    search_url = f"http://export.arxiv.org/api/query?search_query=all:{encoded_query}&start=0&max_results=10&sortBy=submittedDate&sortOrder=descending"
 
     try:
         with urllib.request.urlopen(search_url, timeout=5) as response:
