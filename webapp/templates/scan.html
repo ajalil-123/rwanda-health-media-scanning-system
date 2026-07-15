@@ -62,10 +62,6 @@
   </div>
 </form>
 
-<div class="dashboard-link">
-  <a href="{{ url_for('sources_dashboard', scan_id=scan.id) }}" class="btn btn-dashboard">📊 View Sources Dashboard</a>
-</div>
-
 <div class="generate-bar">
     <p class="generate-note">Save your review first, then generate the Word report from everything marked "Include."</p>
     <a class="btn btn-generate" href="{{ url_for('generate_report', scan_id=scan.id) }}">Generate Word Report</a>

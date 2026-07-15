@@ -168,50 +168,6 @@ def run_scan_route():
     return redirect(url_for("view_scan", scan_id=result["scan_id"]))
 
 
-@app.route("/scan/<int:scan_id>/sources-dashboard")
-def sources_dashboard(scan_id):
-    scan_info = db.get_scan(scan_id)
-    if not scan_info:
-        flash(f"No scan found with id {scan_id}")
-        return redirect(url_for("index"))
-
-    import json
-    source_counts = {}
-    if scan_info.get("source_counts"):
-        try:
-            source_counts = json.loads(scan_info["source_counts"]) if isinstance(scan_info["source_counts"], str) else scan_info["source_counts"]
-        except (json.JSONDecodeError, TypeError):
-            source_counts = {}
-
-    # Organize sources by category for better display
-    sources_by_category = {
-        "search": [],
-        "direct_rss": [],
-        "web_scraper": [],
-        "research": [],
-    }
-
-    for source, counts in sorted(source_counts.items()):
-        if source == "Google News":
-            sources_by_category["search"].append((source, counts))
-        elif source == "PubMed":
-            sources_by_category["research"].append((source, counts))
-        elif source in [s["name"] for s in config.SCRAPE_SITES]:
-            sources_by_category["web_scraper"].append((source, counts))
-        else:
-            sources_by_category["direct_rss"].append((source, counts))
-
-    return render_template(
-        "sources_dashboard.html",
-        scan=scan_info,
-        sources_by_category=sources_by_category,
-        total_counts={
-            "collected": sum(c["collected"] for c in source_counts.values()),
-            "windowed": sum(c["windowed"] for c in source_counts.values()),
-            "relevant": sum(c["relevant"] for c in source_counts.values()),
-            "unique": sum(c["unique"] for c in source_counts.values()),
-        },
-    )
 
 
 @app.route("/scan/<int:scan_id>/generate-report")
