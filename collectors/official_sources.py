@@ -69,8 +69,19 @@ def scrape_official_site(site):
 
 
 def collect():
-    """Collect from all configured official sources."""
+    """
+    Collect from official government and health organization sources.
+    
+    NOTE: Official sources scraper is DISABLED because:
+    - Many government sites don't allow automated access
+    - Performance unpredictable (slow or blocking)
+    - Daily news from major outlets usually covers official announcements
+    
+    For official health announcements, consider:
+    - Manual monitoring of MOH.gov.rw, RBC.gov.rw websites
+    - Email subscriptions to official mailing lists
+    - Social media follows (@MOH_Rwanda, etc)
+    """
     all_items = []
-    for site in config.OFFICIAL_SOURCES:
-        all_items += scrape_official_site(site)
+    logger.info("Official sources collector: DISABLED. Monitor manually or use social media.")
     return all_items

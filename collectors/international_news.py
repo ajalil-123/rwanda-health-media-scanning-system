@@ -81,8 +81,22 @@ def scrape_international_site(site):
 
 
 def collect():
-    """Collect from all configured international sources."""
+    """
+    Collect from international news sources.
+    
+    NOTE: International sources scraper is DISABLED because:
+    - Reuters, BBC, AFP, Al Jazeera, France 24, DW block automated requests (HTTP 403)
+    - These sites actively detect and block web scrapers
+    - Google News already aggregates these same stories anyway
+    
+    International coverage of Rwanda health is available through:
+    - Google News RSS (queries already include international outlets)
+    - Direct RSS feeds from outlets that allow it
+    
+    For custom international coverage, consider:
+    - Using news aggregator APIs (NewsAPI, etc.)
+    - RSS feeds if the outlet provides them
+    """
     all_items = []
-    for site in config.INTERNATIONAL_SOURCES:
-        all_items += scrape_international_site(site)
+    logger.info("International sources collector: DISABLED (blocking). Use Google News instead.")
     return all_items

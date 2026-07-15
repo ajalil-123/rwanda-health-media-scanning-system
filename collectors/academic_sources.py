@@ -211,17 +211,22 @@ def scrape_arxiv(query="Rwanda health"):
 
 
 def collect():
-    """Collect from all configured academic/research sources."""
+    """
+    Collect from academic/research sources.
+    
+    NOTE: Google Scholar, ResearchGate, SSRN, and arXiv scrapers are DISABLED because:
+    - These sites actively block automated requests (HTTP 403/429)
+    - Connection timeouts on Render (causes worker to hang and timeout)
+    - Unreliable results (often empty, blocked, or very slow)
+    
+    PubMed would be used if enabled, but academic sources are not critical
+    for daily health news scanning - RSS feeds and news sites provide sufficient coverage.
+    
+    If academic/research coverage is needed, consider:
+    - Institutional database access (through RBC partnerships)
+    - Official APIs from research organizations
+    - Scheduled batch jobs on dedicated infrastructure (not Render free tier)
+    """
     all_items = []
-
-    for source in config.RESEARCH_SOURCES:
-        if source["source"] == "google_scholar":
-            all_items += scrape_google_scholar(source.get("query", "Rwanda health"))
-        elif source["source"] == "researchgate":
-            all_items += scrape_researchgate(source.get("query", "Rwanda health"))
-        elif source["source"] == "ssrn":
-            all_items += scrape_ssrn(source.get("query", "Rwanda health"))
-        elif source["source"] == "arxiv":
-            all_items += scrape_arxiv(source.get("query", "Rwanda health"))
-
+    logger.info("Academic sources collector: DISABLED (blocking/timeouts). Use RSS feeds for news.")
     return all_items
