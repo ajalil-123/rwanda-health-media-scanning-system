@@ -98,15 +98,22 @@ def _extract_with_selector(soup, selector, base_url):
         # Look in parent containers (article, div, li, etc.)
         date_element = None
         for parent in a.parents:
+            # Skip non-Tag elements (NavigableString, etc.)
+            if not hasattr(parent, 'name'):
+                continue
             # Stop at body level
             if parent.name == "body":
                 break
             # Try to find date in this parent
-            from collectors.rss_utils import extract_date_from_element
-            test_date = extract_date_from_element(parent)
-            if test_date:
-                date_element = parent
-                break
+            try:
+                from collectors.rss_utils import extract_date_from_element
+                test_date = extract_date_from_element(parent)
+                if test_date:
+                    date_element = parent
+                    break
+            except Exception:  # noqa: BLE001
+                # If date extraction fails on this parent, just try the next one
+                continue
         
         items.append((urljoin(base_url, href), text, date_element))
     return items
@@ -131,13 +138,20 @@ def _extract_generic(soup, base_url, base_domain):
             # Try to find date in parent container
             date_element = None
             for parent in a.parents:
+                # Skip non-Tag elements
+                if not hasattr(parent, 'name'):
+                    continue
                 if parent.name == "body":
                     break
-                from collectors.rss_utils import extract_date_from_element
-                test_date = extract_date_from_element(parent)
-                if test_date:
-                    date_element = parent
-                    break
+                try:
+                    from collectors.rss_utils import extract_date_from_element
+                    test_date = extract_date_from_element(parent)
+                    if test_date:
+                        date_element = parent
+                        break
+                except Exception:  # noqa: BLE001
+                    # If date extraction fails on this parent, just try the next one
+                    continue
             items.append((href, text, date_element))
     return items
 
