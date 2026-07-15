@@ -70,11 +70,12 @@ def collect():
         parsed = parse_feed(xml_text)
         for item in parsed:
             source_name = item.get("source_name") or "Google News (unattributed)"
+            from collectors.rss_utils import strip_html_tags
             all_items.append({
                 "title": _strip_source_suffix(item["title"], item.get("source_name")),
                 "url": item["url"],
                 "published_at": item["published_at"],
-                "summary": item.get("summary") or "",
+                "summary": strip_html_tags(item.get("summary") or ""),
                 "source_name": source_name,
                 "source_category": _classify_category(item.get("source_name")),
                 "language": q["hl"].split("-")[0],

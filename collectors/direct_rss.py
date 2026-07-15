@@ -26,11 +26,12 @@ def collect():
 
         parsed = parse_feed(xml_text)
         for item in parsed:
+            from collectors.rss_utils import strip_html_tags
             all_items.append({
                 "title": item["title"],
                 "url": item["url"],
                 "published_at": item["published_at"],
-                "summary": item.get("summary") or "",
+                "summary": strip_html_tags(item.get("summary") or ""),
                 "source_name": source["name"],
                 "source_category": source["category"],
                 "language": source["language"],

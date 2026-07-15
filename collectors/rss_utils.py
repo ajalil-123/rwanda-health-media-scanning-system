@@ -6,6 +6,7 @@ third-party dependency beyond `requests` -- fewer moving parts to keep
 free and working long-term.
 """
 
+import re
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -13,6 +14,31 @@ from email.utils import parsedate_to_datetime
 import requests
 
 import config
+
+
+def strip_html_tags(text):
+    """
+    Remove HTML tags from text. Used to clean summaries from RSS feeds
+    that include raw HTML markup.
+    
+    Examples:
+    - '<a href="...">link</a>' → 'link'
+    - '<font color="#fff">text</font>' → 'text'
+    - 'text&nbsp;&nbsp;<br/>' → 'text'
+    """
+    if not text:
+        return ""
+    # Remove HTML tags: anything between < and >
+    text = re.sub(r'<[^>]+>', '', text)
+    # Decode common HTML entities
+    text = text.replace('&nbsp;', ' ')
+    text = text.replace('&amp;', '&')
+    text = text.replace('&lt;', '<')
+    text = text.replace('&gt;', '>')
+    text = text.replace('&quot;', '"')
+    # Clean up excess whitespace
+    text = ' '.join(text.split())
+    return text.strip()
 
 
 def fetch_url(url, params=None):
