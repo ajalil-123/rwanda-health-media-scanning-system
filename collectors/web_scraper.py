@@ -93,29 +93,7 @@ def _extract_with_selector(soup, selector, base_url):
         text = a.get_text(strip=True)
         if not href or not text:
             continue
-        
-        # Try to find date info nearby the link
-        # Look in parent containers (article, div, li, etc.)
-        date_element = None
-        for parent in a.parents:
-            # Skip non-Tag elements (NavigableString, etc.)
-            if not hasattr(parent, 'name'):
-                continue
-            # Stop at body level
-            if parent.name == "body":
-                break
-            # Try to find date in this parent
-            try:
-                from collectors.rss_utils import extract_date_from_element
-                test_date = extract_date_from_element(parent)
-                if test_date:
-                    date_element = parent
-                    break
-            except Exception:  # noqa: BLE001
-                # If date extraction fails on this parent, just try the next one
-                continue
-        
-        items.append((urljoin(base_url, href), text, date_element))
+        items.append((urljoin(base_url, href), text))
     return items
 
 
@@ -135,24 +113,7 @@ def _extract_generic(soup, base_url, base_domain):
         href = urljoin(base_url, a["href"])
         text = a.get_text(strip=True)
         if _looks_like_article_link(href, text, base_domain):
-            # Try to find date in parent container
-            date_element = None
-            for parent in a.parents:
-                # Skip non-Tag elements
-                if not hasattr(parent, 'name'):
-                    continue
-                if parent.name == "body":
-                    break
-                try:
-                    from collectors.rss_utils import extract_date_from_element
-                    test_date = extract_date_from_element(parent)
-                    if test_date:
-                        date_element = parent
-                        break
-                except Exception:  # noqa: BLE001
-                    # If date extraction fails on this parent, just try the next one
-                    continue
-            items.append((href, text, date_element))
+            items.append((href, text))
     return items
 
 
@@ -195,20 +156,21 @@ def scrape_site(site):
     # from multiple spots -- a thumbnail and a title, for instance).
     seen_urls = set()
     items = []
-    for url, title, date_element in found:
+    for url, title in found:
         if url in seen_urls:
             continue
         seen_urls.add(url)
 
-        # Try to extract published date from the article element
-        from collectors.rss_utils import extract_date_from_element
-        published_at = extract_date_from_element(date_element) if date_element else None
-        # extract_date_from_element returns a datetime object, which is what we need
+        # Skip date extraction for web scrapers - it's too slow and dates aren't
+        # reliable on homepage listings anyway. The pipeline keeps items with
+        # published_at=None as "can't rule it out" which is appropriate for
+        # homepage content (implicitly recent).
+        published_at = None
 
         items.append({
             "title": re.sub(r"\s+", " ", title).strip(),
             "url": url,
-            "published_at": published_at,  # Keep as datetime object, not string
+            "published_at": published_at,
             "summary": "",
             "source_name": site["name"],
             "source_category": site.get("category", "local_online"),

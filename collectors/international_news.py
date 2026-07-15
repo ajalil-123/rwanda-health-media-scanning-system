@@ -56,25 +56,20 @@ def scrape_international_site(site):
         found = _extract_generic(soup, site["url"], "")
 
     # Filter for Rwanda mentions
-    found = [(url, title, date_elem) for url, title, date_elem in found if _contains_rwanda_mention(title)]
+    found = [(url, title) for url, title in found if _contains_rwanda_mention(title)]
 
     # Deduplicate within this page
     seen_urls = set()
     items = []
-    for url, title, date_element in found:
+    for url, title in found:
         if url in seen_urls:
             continue
         seen_urls.add(url)
 
-        # Try to extract published date
-        from collectors.rss_utils import extract_date_from_element
-        published_at = extract_date_from_element(date_element) if date_element else None
-        # Keep as datetime object, not string
-
         items.append({
             "title": title.strip(),
             "url": url,
-            "published_at": published_at,  # Keep as datetime object
+            "published_at": None,  # Not available reliably from listing pages
             "summary": "",
             "source_name": site["name"],
             "source_category": site.get("category", "international"),

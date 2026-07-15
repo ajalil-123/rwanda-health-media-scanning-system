@@ -892,7 +892,7 @@ class TestWebScraper(unittest.TestCase):
     def test_relative_urls_are_resolved_to_absolute(self):
         soup = __import__("bs4").BeautifulSoup(self.WORDPRESS_STYLE_HTML, "html.parser")
         found = web_scraper._extract_with_selector(soup, "h2.entry-title a", "https://example.com/news/")
-        for url, _, _ in found:
+        for url, _ in found:
             self.assertTrue(url.startswith("https://example.com/"))
 
     def test_scrape_site_deduplicates_repeated_links_on_same_page(self):
