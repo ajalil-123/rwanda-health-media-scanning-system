@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Dashboard -- Rwanda Health Media Scanning System{% endblock %}
+
+{% block content %}
+  <h1>Dashboard</h1>
+  <p class="subtitle">Health media monitoring system overview</p>
+
+  <!-- Quick Action Buttons -->
+  <div class="action-buttons">
+    <a class="btn-action" href="{{ url_for('new_scan_form') }}">⚡ Run New Scan</a>
+    <a class="btn-action secondary" href="#scans">📋 View Scan History</a>
+    {% if scans %}
+      <a class="btn-action secondary" href="{{ url_for('view_scan', scan_id=scans[0].id) }}">👁️ Latest Results</a>
+    {% endif %}
+  </div>
+
+  <!-- Statistics Cards -->
+  {% if scans %}
+    {% set latest = scans[0] %}
+    {% set week_scans = scans[:7] %}
+    {% set week_total = week_scans|map(attribute='unique_items')|sum %}
+    {% set month_scans = scans[:30] %}
+    {% set month_total = month_scans|map(attribute='unique_items')|sum %}
+    
+    <div class="last-update">
+      <strong>Last scan:</strong> <span class="update-time">{{ latest.started_at[:16].replace('T', ' ') }}</span> 
+      • {{ latest.unique_items }} stories • {{ latest.raw_items_collected }} items collected • Completed in ~{{ (latest.finished_at[:19] if latest.finished_at else '') }}
+    </div>
+
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-label">This Week</div>
+        <div class="stat-number">{{ week_total }}</div>
+        <div class="stat-subtext">stories from {{ week_scans|length }} scan(s)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">This Month</div>
+        <div class="stat-number">{{ month_total }}</div>
+        <div class="stat-subtext">stories from {{ month_scans|length }} scan(s)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Data Sources</div>
+        <div class="stat-number">8</div>
+        <div class="stat-subtext">active sources</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last Scan Items</div>
+        <div class="stat-number">{{ latest.raw_items_collected }}</div>
+        <div class="stat-subtext">collected → {{ latest.unique_items }} relevant</div>
+      </div>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h2>Welcome to Rwanda Health Media Scanner</h2>
+      <p>Get started by running your first scan. Choose from:</p>
+      <ul style="text-align: left; display: inline-block; margin: 16px 0;">
+        <li><strong>Daily scan:</strong> Monitors health news from the past day</li>
+        <li><strong>Weekly scan:</strong> Comprehensive review for the entire week</li>
+        <li><strong>Custom date:</strong> Scan a specific date or date range</li>
+      </ul>
+      <p style="margin-top: 20px;">
+        <a href="{{ url_for('new_scan_form') }}" class="btn btn-primary" style="font-size: 16px; padding: 12px 28px;">
+          Run Your First Scan
+        </a>
+      </p>
+      <p style="font-size: 13px; color: #666; margin-top: 20px;">
+        Or run from terminal: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">python scan.py --mode daily</code>
+      </p>
+    </div>
+  {% endif %}
+
+  <!-- Scan History Section -->
+  {% if scans %}
+    <div style="margin-top: 40px;" id="scans">
+      <h2 style="color: var(--navy); border-bottom: 2px solid var(--teal); padding-bottom: 8px; margin-bottom: 20px;">
+        Scan History <span style="color: var(--grey); font-weight: normal; font-size: 14px;">(showing latest {{ scans|length }})</span>
+      </h2>
+
+      <div style="overflow-x: auto;">
+        <table class="scan-list">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Mode</th>
+              <th>Collected</th>
+              <th>Relevant</th>
+              <th>Stories</th>
+              <th>Status</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for scan in scans %}
+            <tr {% if loop.index == 1 %}style="background: #f9f9f9;"{% endif %}>
+              <td><strong>{{ scan.window_start[:10] }}</strong></td>
+              <td><span class="badge badge-{{ scan.mode }}">{{ scan.mode }}</span></td>
+              <td>{{ scan.raw_items_collected }}</td>
+              <td>{{ scan.relevant_items }}</td>
+              <td><strong style="color: var(--green);">{{ scan.unique_items }}</strong></td>
+              <td><span style="color: var(--green); font-weight: 600;">✓ Complete</span></td>
+              <td><a class="btn btn-small" href="{{ url_for('view_scan', scan_id=scan.id) }}">Review</a></td>
+              <td>
+                <form method="post" action="{{ url_for('delete_scan_route', scan_id=scan.id) }}" style="display: inline;"
+                      onsubmit="return confirm('Delete this scan?');">
+                  <button type="submit" class="btn btn-danger btn-small">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if scans|length > 0 %}
+        <div style="margin-top: 16px; text-align: right;">
+          <form method="post" action="{{ url_for('delete_all_scans_route') }}" style="display: inline;"
+                onsubmit="return confirm('Delete ALL {{ scans|length }} scans? This cannot be undone.');">
+            <button type="submit" class="btn btn-danger">Delete All Scans</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

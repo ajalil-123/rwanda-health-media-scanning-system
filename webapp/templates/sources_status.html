@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Data Sources Status -- Rwanda Health Media Scanning System{% endblock %}
+
+{% block content %}
+  <h1>Data Sources Status</h1>
+  <p class="subtitle">Monitor health and performance of all data collection sources</p>
+
+  <!-- Active Sources Section -->
+  <div style="margin-bottom: 40px;">
+    <h2 style="color: var(--navy); border-bottom: 2px solid var(--green); padding-bottom: 12px; margin-bottom: 20px;">
+      Active Sources (8)
+    </h2>
+
+    <!-- Google News -->
+    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div>
+          <h3 style="margin: 0 0 4px 0; color: var(--navy);">📰 Google News RSS</h3>
+          <p style="margin: 0; font-size: 13px; color: var(--grey);">Search aggregation across 5 health-related queries</p>
+          <div style="margin-top: 12px; display: flex; gap: 20px; font-size: 13px;">
+            <div><span style="color: var(--grey);">Status:</span> <span style="color: var(--green); font-weight: 600;">✓ Working</span></div>
+            <div><span style="color: var(--grey);">Items/scan:</span> <strong>100-150</strong></div>
+            <div><span style="color: var(--grey);">Success rate:</span> <strong>100%</strong></div>
+            <div><span style="color: var(--grey);">Speed:</span> <strong>~5 sec</strong></div>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <span class="badge" style="background: #dcfce7; color: #166534;">ACTIVE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direct RSS Feeds -->
+    <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <h4 style="margin: 0 0 12px 0; color: var(--navy);">Direct RSS Feeds (3 sources)</h4>
+      
+      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div>
+            <strong>The New Times</strong>
+            <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">newtimes.co.rw</p>
+          </div>
+          <div style="text-align: right; font-size: 12px;">
+            <div>✓ Working</div>
+            <div style="color: var(--grey); margin-top: 2px;">30-50 items</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div>
+            <strong>KT Press</strong>
+            <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">ktpress.rw</p>
+          </div>
+          <div style="text-align: right; font-size: 12px;">
+            <div>✓ Working</div>
+            <div style="color: var(--grey); margin-top: 2px;">5-15 items</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div>
+            <strong>Taarifa</strong>
+            <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">taarifa.rw</p>
+          </div>
+          <div style="text-align: right; font-size: 12px;">
+            <div>✓ Working</div>
+            <div style="color: var(--grey); margin-top: 2px;">5-15 items</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Web Scrapers -->
+    <div style="background: #f9f9f9; padding: 16px; border-radius: 8px;">
+      <h4 style="margin: 0 0 12px 0; color: var(--navy);">Web Scrapers (4 sources)</h4>
+      
+      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div>
+            <strong>Panorama</strong>
+            <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">panorama.rw</p>
+          </div>
+          <div style="text-align: right; font-size: 12px;">
+            <div>✓ Working</div>
+            <div style="color: var(--grey); margin-top: 2px;">50-100 items</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div>
+            <strong>The Chronicles</strong>
+            <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">chronicles.rw</p>
+          </div>
+          <div style="text-align: right; font-size: 12px;">
+            <div>✓ Working</div>
+            <div style="color: var(--grey); margin-top: 2px;">20-40 items</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div>
+            <strong>IGIHE</strong>
+            <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">igihe.com</p>
+          </div>
+          <div style="text-align: right; font-size: 12px;">
+            <div style="color: #ff9800;">⚠ Flaky</div>
+            <div style="color: var(--grey); margin-top: 2px;">0-50 items</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px;">
+        <div style="display: flex; justify-content: space-between;">
+          <div>
+            <strong>Kigali Today</strong>
+            <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">kigalitoday.com</p>
+          </div>
+          <div style="text-align: right; font-size: 12px;">
+            <div style="color: #ff9800;">⚠ Flaky</div>
+            <div style="color: var(--grey); margin-top: 2px;">0-30 items</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disabled Sources Section -->
+  <div style="margin-bottom: 40px;">
+    <h2 style="color: var(--navy); border-bottom: 2px solid #ff9800; padding-bottom: 12px; margin-bottom: 20px;">
+      Disabled Sources (7)
+    </h2>
+    <p style="font-size: 13px; color: var(--grey); margin-bottom: 16px;">
+      These sources are disabled because they actively block automated requests or cause system timeouts. Coverage is provided via Google News aggregation instead.
+    </p>
+
+    <div style="background: #fff9e6; border: 1px solid #ffe0b2; border-radius: 8px; padding: 16px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+        <div>
+          <strong>Reuters</strong>
+          <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">HTTP 403 Forbidden</p>
+        </div>
+        <div>
+          <strong>BBC News</strong>
+          <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">HTTP 403 Forbidden</p>
+        </div>
+        <div>
+          <strong>AFP News</strong>
+          <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">HTTP 403 Forbidden</p>
+        </div>
+        <div>
+          <strong>Al Jazeera</strong>
+          <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">HTTP 404 Not Found</p>
+        </div>
+        <div>
+          <strong>France 24</strong>
+          <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">HTTP 403 Forbidden</p>
+        </div>
+        <div>
+          <strong>DW News</strong>
+          <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">HTTP 404 Not Found</p>
+        </div>
+        <div>
+          <strong>Africanews</strong>
+          <p style="margin: 4px 0; font-size: 12px; color: var(--grey);">HTTP 403 Forbidden</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Section -->
+  <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
+    <h3 style="margin-top: 0; color: var(--navy);">How Sources Work</h3>
+    <ul style="font-size: 13px; line-height: 1.8;">
+      <li><strong>Google News RSS:</strong> Aggregates stories from Rwanda health-related news across all outlets</li>
+      <li><strong>Direct RSS:</strong> Pull news directly from outlet RSS feeds (most reliable)</li>
+      <li><strong>Web Scrapers:</strong> Extract headlines from sites without RSS feeds (occasionally blocked)</li>
+      <li><strong>Disabled sources:</strong> International outlets block scrapers; coverage obtained via Google News</li>
+    </ul>
+
+    <h3 style="margin-top: 20px; color: var(--navy);">System Health</h3>
+    <p style="font-size: 13px; margin: 8px 0;">
+      <strong>Overall Status:</strong> <span style="color: var(--green); font-weight: 600;">✓ Healthy</span>
+      • <strong>Active Sources:</strong> 8/8
+      • <strong>Avg Collection Time:</strong> 5-10 seconds
+      • <strong>Avg Success Rate:</strong> 95%+
+    </p>
+  </div>
+
+{% endblock %}

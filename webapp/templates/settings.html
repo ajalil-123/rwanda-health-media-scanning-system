@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Settings -- Rwanda Health Media Scanning System{% endblock %}
+
+{% block content %}
+  <h1>Settings</h1>
+  <p class="subtitle">Configure system behavior and preferences</p>
+
+  <!-- Settings Sections -->
+  <div style="max-width: 800px;">
+
+    <!-- Scan Schedule Section -->
+    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <h2 style="margin-top: 0; color: var(--navy);">Scan Schedule</h2>
+      <p style="color: var(--grey); font-size: 13px; margin-bottom: 16px;">
+        Configure automatic scan scheduling. Currently disabled - enable via cron job or server scheduler.
+      </p>
+
+      <div class="form-group">
+        <label style="font-weight: 600;">Daily Scan</label>
+        <p style="font-size: 13px; color: var(--grey); margin: 4px 0;">Runs every day at 7:00 AM (local server time)</p>
+        <div style="margin-top: 8px;">
+          <input type="checkbox"> Enable daily scan
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label style="font-weight: 600;">Weekly Scan</label>
+        <p style="font-size: 13px; color: var(--grey); margin: 4px 0;">Runs every Monday at 6:00 AM (local server time)</p>
+        <div style="margin-top: 8px;">
+          <input type="checkbox"> Enable weekly scan
+        </div>
+      </div>
+
+      <p style="font-size: 12px; color: #999; background: #f9f9f9; padding: 10px; border-radius: 6px; margin-top: 16px;">
+        <strong>Terminal command:</strong> <code style="background: white; padding: 2px 6px;">python scan.py --mode daily</code>
+      </p>
+    </div>
+
+    <!-- Keywords Section -->
+    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <h2 style="margin-top: 0; color: var(--navy);">Keywords & Filtering</h2>
+      <p style="color: var(--grey); font-size: 13px; margin-bottom: 16px;">
+        Manage health-related keywords used for relevance filtering. Currently: 35 active keywords across 3 languages.
+      </p>
+
+      <div style="background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+        <p style="margin: 0; font-size: 12px;"><strong>English:</strong> health, hospital, disease, malaria, vaccine, outbreak, epidemic...</p>
+        <p style="margin: 4px 0; font-size: 12px;"><strong>Kinyarwanda:</strong> ubuzima, ibitaro, indwara, sida...</p>
+        <p style="margin: 4px 0; font-size: 12px;"><strong>French:</strong> santé, hôpital, maladie, vaccin...</p>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button class="btn" style="background: var(--teal);">View All Keywords</button>
+        <button class="btn" style="background: white; color: var(--teal); border: 2px solid var(--teal);">Import Keywords</button>
+        <button class="btn" style="background: white; color: var(--teal); border: 2px solid var(--teal);">Export Keywords</button>
+      </div>
+    </div>
+
+    <!-- Data Management Section -->
+    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <h2 style="margin-top: 0; color: var(--navy);">Data Management</h2>
+      <p style="color: var(--grey); font-size: 13px; margin-bottom: 16px;">
+        Manage stored data and reports.
+      </p>
+
+      <div style="background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+        <p style="margin: 0; font-size: 13px;">
+          <strong>Database Size:</strong> ~2.5 MB<br>
+          <strong>Total Scans:</strong> 45<br>
+          <strong>Total Stories:</strong> 218
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label style="font-weight: 600;">Backup & Restore</label>
+        <p style="font-size: 13px; color: var(--grey); margin: 4px 0 12px 0;">Download or upload database backup</p>
+        <div style="display: flex; gap: 12px;">
+          <button class="btn" style="background: var(--teal);">Download Backup</button>
+          <button class="btn" style="background: white; color: var(--teal); border: 2px solid var(--teal);">Restore Backup</button>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e0e0e0;">
+        <label style="font-weight: 600; color: #d32f2f;">Delete All Data</label>
+        <p style="font-size: 13px; color: var(--grey); margin: 4px 0 12px 0;">Permanently delete all scans and stories. This cannot be undone.</p>
+        <button class="btn btn-danger" onclick="confirm('Delete all data? This cannot be undone.') && alert('Not implemented - use Dashboard to delete individual scans')">Delete All Data</button>
+      </div>
+    </div>
+
+    <!-- System Info Section -->
+    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px;">
+      <h2 style="margin-top: 0; color: var(--navy);">System Information</h2>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0; font-weight: 600; width: 40%;">System Version</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">Rwanda Health Media Scanner v1.0</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0; font-weight: 600;">Database</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">SQLite 3.x</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0; font-weight: 600;">Framework</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">Flask 3.0+</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0; font-weight: 600;">Data Sources</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">8 active sources</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0; font-weight: 600;">Languages Supported</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">English, Kinyarwanda, French</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-weight: 600;">Last Update</td>
+          <td style="padding: 8px 0;">July 2026</td>
+        </tr>
+      </table>
+
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <h3 style="margin-top: 0; color: var(--navy); font-size: 14px;">Documentation</h3>
+        <ul style="font-size: 13px; margin: 8px 0; padding-left: 20px;">
+          <li><a href="#" style="color: var(--teal); text-decoration: none;">User Guide</a></li>
+          <li><a href="#" style="color: var(--teal); text-decoration: none;">API Documentation</a></li>
+          <li><a href="#" style="color: var(--teal); text-decoration: none;">Data Sources Guide</a></li>
+          <li><a href="#" style="color: var(--teal); text-decoration: none;">Troubleshooting</a></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+{% endblock %}

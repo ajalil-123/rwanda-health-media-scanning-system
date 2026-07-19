@@ -8,7 +8,15 @@
 </head>
 <body>
   <header class="topbar">
-    <a href="{{ url_for('index') }}" class="brand">Rwanda Health Media Scanning System</a>
+    <div class="topbar-content">
+      <a href="{{ url_for('index') }}" class="brand">🏥 Rwanda Health Media Scanner</a>
+      <nav class="topbar-nav">
+        <a href="{{ url_for('index') }}" class="nav-link">Scans</a>
+        <a href="{{ url_for('new_scan_form') }}" class="nav-link">Run Scan</a>
+        <a href="{{ url_for('sources_status') }}" class="nav-link">Sources</a>
+        <a href="{{ url_for('settings') }}" class="nav-link">Settings</a>
+      </nav>
+    </div>
   </header>
 
   <main class="container">
@@ -22,5 +30,13 @@
 
     {% block content %}{% endblock %}
   </main>
+
+  <footer class="footer">
+    <p>Rwanda Health Media Scanning System | Last updated: <span id="current-time"></span></p>
+  </footer>
+
+  <script>
+    document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
+  </script>
 </body>
 </html>

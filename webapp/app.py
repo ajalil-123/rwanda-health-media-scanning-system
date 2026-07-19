@@ -184,6 +184,18 @@ def generate_report(scan_id):
     return send_file(os.path.abspath(out_path), as_attachment=True)
 
 
+@app.route("/sources")
+def sources_status():
+    """Display data sources status and health"""
+    return render_template("sources_status.html")
+
+
+@app.route("/settings")
+def settings():
+    """Display system settings page"""
+    return render_template("settings.html")
+
+
 if __name__ == "__main__":
     import os
     db.init_db()

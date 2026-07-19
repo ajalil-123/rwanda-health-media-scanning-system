@@ -2,59 +2,76 @@
 {% block title %}Scans -- Rwanda Health Media Scanning System{% endblock %}
 
 {% block content %}
-  <h1>Scans</h1>
-  <p class="subtitle">Each scan is strictly scoped to its own day or week -- select one to review its shortlist.</p>
+  <h1>Health Media Scans</h1>
+  <p class="subtitle">Review health media coverage from Rwanda</p>
 
-  <a class="btn btn-primary" href="{{ url_for('new_scan_form') }}">+ Run a new scan</a>
-  {% if scans %}
-    <form method="post" action="{{ url_for('delete_all_scans_route') }}" style="display:inline;"
-          onsubmit="return confirm('Delete ALL {{ scans|length }} scan(s)? This cannot be undone.');">
-      <button type="submit" class="btn btn-danger">Delete all scans</button>
-    </form>
-  {% endif %}
-  <div style="margin-top: 20px;"></div>
+  <!-- Quick Actions -->
+  <div class="action-buttons">
+    <a class="btn-action" href="{{ url_for('new_scan_form') }}">⚡ Run New Scan</a>
+  </div>
 
+  <!-- Scan List -->
   {% if not scans %}
     <div class="empty-state">
-      <p>No scans yet. <a href="{{ url_for('new_scan_form') }}">Run your first scan</a>, or from the terminal:</p>
-      <pre>python scan.py --mode daily</pre>
-      <p>or, to try it without live internet access:</p>
-      <pre>python demo_offline_run.py</pre>
-      <p>Then refresh this page.</p>
+      <h2>No Scans Yet</h2>
+      <p>Start by running your first health media scan. Choose from:</p>
+      <ul style="text-align: left; display: inline-block; margin: 16px 0; font-size: 14px;">
+        <li><strong>Daily:</strong> Monitor health news from the past day</li>
+        <li><strong>Weekly:</strong> Comprehensive review for the entire week</li>
+        <li><strong>Custom:</strong> Scan a specific date or date range</li>
+      </ul>
+      <p style="margin-top: 20px;">
+        <a href="{{ url_for('new_scan_form') }}" class="btn btn-primary" style="font-size: 16px; padding: 12px 28px;">
+          Run Your First Scan
+        </a>
+      </p>
     </div>
   {% else %}
-    <table class="scan-list">
-      <thead>
-        <tr>
-          <th>Mode</th>
-          <th>Window</th>
-          <th>Raw collected</th>
-          <th>Relevant</th>
-          <th>Unique (shortlist)</th>
-          <th>Started</th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for scan in scans %}
-        <tr>
-          <td><span class="badge badge-{{ scan.mode }}">{{ scan.mode }}</span></td>
-          <td>{{ scan.window_start[:10] }} &rarr; {{ scan.window_end[:10] }}</td>
-          <td>{{ scan.raw_items_collected }}</td>
-          <td>{{ scan.relevant_items }}</td>
-          <td>{{ scan.unique_items }}</td>
-          <td>{{ scan.started_at[:16].replace('T', ' ') }}</td>
-          <td><a class="btn" href="{{ url_for('view_scan', scan_id=scan.id) }}">Review &rarr;</a></td>
-          <td>
-            <form method="post" action="{{ url_for('delete_scan_route', scan_id=scan.id) }}"
-                  onsubmit="return confirm('Delete this scan and its {{ scan.unique_items }} item(s)? This cannot be undone.');">
-              <button type="submit" class="btn btn-danger btn-small">Delete</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div style="overflow-x: auto;">
+      <table class="scan-list">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Mode</th>
+            <th>Period</th>
+            <th>Collected</th>
+            <th>Relevant</th>
+            <th>Stories</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in scans %}
+          <tr>
+            <td><strong>{{ scan.window_start[:10] }}</strong></td>
+            <td><span class="badge badge-{{ scan.mode }}">{{ scan.mode }}</span></td>
+            <td>{{ scan.window_start[:10] }} to {{ scan.window_end[:10] }}</td>
+            <td>{{ scan.raw_items_collected }}</td>
+            <td>{{ scan.relevant_items }}</td>
+            <td><strong style="color: var(--green);">{{ scan.unique_items }}</strong></td>
+            <td><a class="btn btn-small" href="{{ url_for('view_scan', scan_id=scan.id) }}">Review</a></td>
+            <td>
+              <form method="post" action="{{ url_for('delete_scan_route', scan_id=scan.id) }}" style="display: inline;"
+                    onsubmit="return confirm('Delete this scan?');">
+                <button type="submit" class="btn btn-danger btn-small">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Delete All Button -->
+    {% if scans|length > 0 %}
+      <div style="margin-top: 16px; text-align: right;">
+        <form method="post" action="{{ url_for('delete_all_scans_route') }}" style="display: inline;"
+              onsubmit="return confirm('Delete ALL {{ scans|length }} scan(s)? This cannot be undone.');">
+          <button type="submit" class="btn btn-danger">Delete All Scans</button>
+        </form>
+      </div>
+    {% endif %}
   {% endif %}
+
 {% endblock %}

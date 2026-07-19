@@ -19,13 +19,48 @@ body {
 
 .topbar {
   background: var(--navy);
-  padding: 16px 24px;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
+
+.topbar-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .brand {
   color: white;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
-  font-size: 18px;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+
+.topbar-nav {
+  display: flex;
+  gap: 24px;
+}
+
+.nav-link {
+  color: rgba(255,255,255,0.8);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+  padding: 8px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover {
+  color: white;
+  border-bottom-color: rgba(255,255,255,0.3);
 }
 
 .container {
@@ -331,4 +366,278 @@ textarea {
 
 .source-zero td {
   color: #aaa;
+}
+
+/* PHASE 1 IMPROVEMENTS - Dashboard removed */
+
+/* Stats Cards - REMOVED */
+
+.btn-action {
+  background: var(--teal);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-action:hover {
+  background: #0a5555;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-action.secondary {
+  background: white;
+  color: var(--teal);
+  border: 2px solid var(--teal);
+}
+
+.btn-action.secondary:hover {
+  background: #f0fafa;
+}
+
+/* Last Update Info - REMOVED */
+.filters-section {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--grey);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(15, 110, 110, 0.1);
+}
+
+.filter-button {
+  background: var(--teal);
+  color: white;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-button:hover {
+  opacity: 0.9;
+}
+
+/* Improved Article Cards */
+.articles-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.articles-count {
+  font-size: 14px;
+  color: var(--grey);
+}
+
+.item-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 14px;
+  transition: all 0.2s;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+}
+
+.item-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: var(--teal);
+}
+
+.item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.include-toggle {
+  background: var(--green);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.include-toggle:hover {
+  background: #1a6b35;
+}
+
+.item-included .include-toggle {
+  background: #28a745;
+}
+
+/* Source Badge with Color Coding */
+.source-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-google-news { background: #dbeafe; color: #1e40af; }
+.badge-the-new-times { background: #dcfce7; color: #166534; }
+.badge-kt-press { background: #fed7aa; color: #92400e; }
+.badge-taarifa { background: #e9d5ff; color: #6b21a8; }
+.badge-panorama { background: #fecaca; color: #991b1b; }
+.badge-chronicles { background: #fef08a; color: #854d0e; }
+.badge-igihe { background: #fbcfe8; color: #831843; }
+.badge-kigali-today { background: #a5f3fc; color: #164e63; }
+
+/* Relevance Score Bar */
+.relevance-bar {
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.relevance-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Footer */
+.footer {
+  background: #f9f9f9;
+  border-top: 1px solid var(--border);
+  padding: 16px 24px;
+  margin-top: 48px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--grey);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .topbar-nav {
+    gap: 12px;
+  }
+
+  .nav-link {
+    font-size: 13px;
+  }
+
+  .stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .item-card {
+    grid-template-columns: 1fr;
+  }
+
+  .item-actions {
+    align-items: flex-start;
+  }
+
+  .filters-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .topbar-nav {
+    width: 100%;
+    justify-content: space-around;
+    gap: 8px;
+  }
+
+  .brand {
+    font-size: 16px;
+  }
+
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .btn-action {
+    width: 100%;
+    justify-content: center;
+  }
 }

@@ -2,68 +2,237 @@
 {% block title %}{{ scan.mode|title }} scan review{% endblock %}
 
 {% block content %}
-  <a class="back-link" href="{{ url_for('index') }}">&larr; All scans</a>
+  <a class="back-link" href="{{ url_for('index') }}">&larr; Dashboard</a>
 
-  <h1>{{ scan.mode|title }} scan <span class="badge badge-{{ scan.mode }}">{{ scan.mode }}</span></h1>
-  <p class="subtitle">
-    Window: {{ scan.window_start[:16].replace('T', ' ') }} &rarr; {{ scan.window_end[:16].replace('T', ' ') }}
-    &middot; {{ total_items }} items in shortlist &middot; {{ included_count }} marked for inclusion so far
-  </p>
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+    <div>
+      <h1>{{ scan.mode|title }} Scan Results</h1>
+      <p class="subtitle">
+        {{ scan.window_start[:10] }} to {{ scan.window_end[:10] }}
+      </p>
+    </div>
+    <div style="text-align: right; background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px; font-size: 13px;">
+      <div style="margin-bottom: 6px;">Collected: <strong style="color: var(--navy); font-size: 18px;">{{ scan.raw_items_collected }}</strong></div>
+      <div style="margin-bottom: 6px;">Relevant: <strong style="color: var(--teal); font-size: 18px;">{{ scan.relevant_items }}</strong></div>
+      <div>Stories: <strong style="color: var(--green); font-size: 18px;">{{ total_items }}</strong></div>
+    </div>
+  </div>
 
-  <form method="post" action="{{ url_for('save_review', scan_id=scan.id) }}">
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Filter by language</label>
+      <select id="language-filter" onchange="filterArticles()">
+        <option value="">All languages</option>
+        <option value="en">English</option>
+        <option value="rw">Kinyarwanda</option>
+        <option value="fr">French</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Filter by source</label>
+      <select id="source-filter" onchange="filterArticles()">
+        <option value="">All sources</option>
+        <option value="Google News">Google News</option>
+        <option value="The New Times">The New Times</option>
+        <option value="KT Press">KT Press</option>
+        <option value="Taarifa">Taarifa</option>
+        <option value="Panorama">Panorama</option>
+        <option value="The Chronicles">The Chronicles</option>
+        <option value="IGIHE">IGIHE</option>
+        <option value="Kigali Today">Kigali Today</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" id="search-filter" placeholder="Search titles..." onkeyup="filterArticles()">
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <select id="status-filter" onchange="filterArticles()">
+        <option value="">All items</option>
+        <option value="included">Included only</option>
+        <option value="excluded">Excluded only</option>
+      </select>
+    </div>
+  </div>
+
+  <form method="post" action="{{ url_for('save_review', scan_id=scan.id) }}" id="review-form">
+    <!-- Articles Count Header -->
+    <div class="articles-header">
+      <div>
+        <h3 style="margin: 0; color: var(--navy);">Review Stories</h3>
+        <p class="articles-count">Showing <span id="visible-count">{{ total_items }}</span> of {{ total_items }} stories • {{ included_count }} marked for inclusion</p>
+      </div>
+      <div>
+        <button type="button" class="btn" onclick="markAllIncluded()" style="margin-right: 8px;">Mark All</button>
+        <button type="button" class="btn btn-danger" onclick="markAllExcluded()">Unmark All</button>
+      </div>
+    </div>
+
     {% for cat in category_order %}
       {% set items = grouped.get(cat, []) %}
       {% if items %}
-        <h2 class="section-heading">{{ category_labels[cat] }} <span class="count">({{ items|length }})</span></h2>
+        <div class="category-section" data-category="{{ cat }}">
+          <h2 class="section-heading" style="margin-top: 28px;">{{ category_labels[cat] }} <span class="count">({{ items|length }})</span></h2>
 
-        {% for item in items %}
-          <div class="item-card {% if item.included == 1 %}item-included{% endif %}">
-            <div class="item-header">
-              <label class="include-toggle">
-                <input type="checkbox" name="include_{{ item.id }}" {% if item.included == 1 %}checked{% endif %}>
-                Include in report
-              </label>
-              {% if item.highlight_score %}
-                <span class="score" title="Highlight score: outlet coverage + recency + keyword signal">
-                  score {{ "%.1f"|format(item.highlight_score) }}
-                </span>
-              {% endif %}
+          {% for item in items %}
+            <div class="item-card {% if item.included == 1 %}item-included{% endif %}" data-source="{{ item.source_name }}" data-language="{{ item.language }}" data-title="{{ item.title|lower }}">
+              
+              <div class="item-content">
+                <!-- Title -->
+                <h3 class="item-title" style="margin: 0;">
+                  <a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.title }}</a>
+                </h3>
+
+                <!-- Metadata -->
+                <div class="item-meta">
+                  <span class="source-badge badge-{{ item.source_name|replace(' ', '-')|lower }}">{{ item.source_name }}</span>
+                  {% if item.language %}
+                    <span style="margin-left: 8px; color: var(--grey);">{{ item.language|upper }}</span>
+                  {% endif %}
+                  {% if item.published_at %}
+                    <span style="margin-left: 8px; color: var(--grey);">{{ item.published_at[:10] }}</span>
+                  {% endif %}
+                </div>
+
+                <!-- Relevance Score -->
+                {% if item.highlight_score %}
+                  <div style="margin: 8px 0;">
+                    <small style="color: var(--grey); font-weight: 600;">Relevance</small>
+                    <div class="relevance-bar">
+                      <div class="relevance-fill" style="width: {{ (item.highlight_score / 20) * 100 }}%;"></div>
+                    </div>
+                    <small style="color: var(--grey);">Score: {{ "%.1f"|format(item.highlight_score) }}/20</small>
+                  </div>
+                {% endif %}
+
+                <!-- Keywords -->
+                {% if item.matched_keywords %}
+                  <p class="item-keywords" style="margin: 6px 0; font-size: 12px;">
+                    <strong style="color: var(--teal);">Matched:</strong> {{ item.matched_keywords }}
+                  </p>
+                {% endif %}
+
+                <!-- Snippet -->
+                {% if item.snippet %}
+                  <p class="item-snippet" style="margin: 8px 0;">{{ item.snippet }}</p>
+                {% endif %}
+
+                <!-- Covered By -->
+                {% if item.covered_by %}
+                  <p style="font-size: 12px; color: var(--grey); margin: 6px 0;">
+                    <strong>Also covered by:</strong> {{ item.covered_by.split(',') | reject('equalto', item.source_name) | join(', ') }}
+                  </p>
+                {% endif %}
+
+                <!-- Editor Summary -->
+                <label class="summary-label" for="summary_{{ item.id }}" style="margin-top: 12px;">Editor Note</label>
+                <textarea name="summary_{{ item.id }}" id="summary_{{ item.id }}" rows="2"
+                          placeholder="Add a note for the report (optional)..."
+                          style="margin-top: 4px;">{{ item.editor_summary or '' }}</textarea>
+              </div>
+
+              <!-- Actions -->
+              <div class="item-actions">
+                <label class="include-toggle">
+                  <input type="checkbox" name="include_{{ item.id }}" {% if item.included == 1 %}checked{% endif %} onchange="updateIncludeCount()">
+                  {% if item.included == 1 %}Included{% else %}Include{% endif %}
+                </label>
+                <a href="{{ item.url }}" target="_blank" rel="noopener" class="btn btn-small" style="padding: 4px 10px; font-size: 12px;">Read Full</a>
+              </div>
+
             </div>
-
-            <h3 class="item-title"><a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.title }}</a></h3>
-
-            <p class="item-meta">
-              {{ item.source_name }}
-              {% if item.language %} &middot; {{ item.language }}{% endif %}
-              {% if item.published_at %} &middot; {{ item.published_at[:16].replace('T', ' ') }}{% endif %}
-              {% if item.covered_by %}
-                &middot; also covered by: {{ item.covered_by.split(',') | reject('equalto', item.source_name) | join(', ') }}
-              {% endif %}
-            </p>
-
-            {% if item.matched_keywords %}
-              <p class="item-keywords">matched: {{ item.matched_keywords }}</p>
-            {% endif %}
-
-            {% if item.snippet %}
-              <p class="item-snippet">{{ item.snippet }}</p>
-            {% endif %}
-
-            <label class="summary-label" for="summary_{{ item.id }}">Editor summary (report style)</label>
-            <textarea name="summary_{{ item.id }}" id="summary_{{ item.id }}" rows="2"
-                      placeholder="Write the summary as it should appear in the report...">{{ item.editor_summary or '' }}</textarea>
-          </div>
-        {% endfor %}
+          {% endfor %}
+        </div>
       {% endif %}
     {% endfor %}
 
-    <div class="save-bar">
-    <button type="submit" class="btn btn-primary">Save review</button>
-  </div>
-</form>
+    <!-- Save Bar -->
+    <div class="save-bar" style="margin-top: 32px; padding: 16px 0;">
+      <button type="submit" class="btn btn-primary" style="padding: 12px 28px; font-size: 15px;">Save Review</button>
+      <span style="margin-left: 16px; color: var(--grey); font-size: 13px;">
+        {{ included_count }} of {{ total_items }} stories marked for inclusion
+      </span>
+    </div>
+  </form>
 
-<div class="generate-bar">
-    <p class="generate-note">Save your review first, then generate the Word report from everything marked "Include."</p>
+  <!-- Generate Report -->
+  <div class="generate-bar">
+    <p class="generate-note">Save your review above, then generate the Word report from stories marked "Include."</p>
     <a class="btn btn-generate" href="{{ url_for('generate_report', scan_id=scan.id) }}">Generate Word Report</a>
   </div>
+
+  <script>
+    function filterArticles() {
+      const language = document.getElementById('language-filter').value.toLowerCase();
+      const source = document.getElementById('source-filter').value.toLowerCase();
+      const search = document.getElementById('search-filter').value.toLowerCase();
+      const status = document.getElementById('status-filter').value.toLowerCase();
+
+      let visibleCount = 0;
+
+      document.querySelectorAll('.item-card').forEach(card => {
+        let show = true;
+
+        // Language filter
+        if (language && !card.dataset.language.toLowerCase().includes(language)) {
+          show = false;
+        }
+
+        // Source filter
+        if (source && !card.dataset.source.toLowerCase().includes(source)) {
+          show = false;
+        }
+
+        // Search filter
+        if (search && !card.dataset.title.includes(search)) {
+          show = false;
+        }
+
+        // Status filter
+        if (status === 'included' && !card.classList.contains('item-included')) {
+          show = false;
+        }
+        if (status === 'excluded' && card.classList.contains('item-included')) {
+          show = false;
+        }
+
+        card.style.display = show ? 'grid' : 'none';
+        if (show) visibleCount++;
+      });
+
+      document.getElementById('visible-count').textContent = visibleCount;
+    }
+
+    function updateIncludeCount() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"][name^="include_"]:checked');
+      const total = document.querySelectorAll('input[type="checkbox"][name^="include_"]').length;
+      
+      // Update card styling
+      document.querySelectorAll('.item-card').forEach(card => {
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+          card.classList.add('item-included');
+        } else {
+          card.classList.remove('item-included');
+        }
+      });
+    }
+
+    function markAllIncluded() {
+      document.querySelectorAll('input[type="checkbox"][name^="include_"]:visible').forEach(cb => {
+        cb.checked = true;
+        cb.closest('.item-card').classList.add('item-included');
+      });
+    }
+
+    function markAllExcluded() {
+      document.querySelectorAll('input[type="checkbox"][name^="include_"]:visible').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.item-card').classList.remove('item-included');
+      });
+    }
+  </script>
+
 {% endblock %}

@@ -810,11 +810,11 @@ class TestWebAppDeleteRoutes(unittest.TestCase):
         self._make_scan_with_item()
         resp = self.client.get("/")
         self.assertIn(b"Delete", resp.data)
-        self.assertIn(b"Delete all scans", resp.data)
+        self.assertIn(b"Delete All Scans", resp.data)
 
     def test_index_page_has_no_delete_all_button_when_empty(self):
         resp = self.client.get("/")
-        self.assertNotIn(b"Delete all scans", resp.data)
+        self.assertNotIn(b"Delete All Scans", resp.data)
 
 
 class TestWebScraper(unittest.TestCase):
