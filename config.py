@@ -326,6 +326,8 @@ WEEKLY_WINDOW_DAYS = 7
 
 DB_PATH = "media_monitor.db"
 
+ARTICLE_DATE_FETCH_ENABLED = False
+
 # HTTP settings
 REQUEST_TIMEOUT_SECONDS = 15
 USER_AGENT = "RBC-Health-Media-Monitor/0.1 (+internal RBC tool)"
