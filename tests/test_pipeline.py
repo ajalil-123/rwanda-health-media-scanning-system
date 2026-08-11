@@ -335,12 +335,7 @@ class TestScanWindow(unittest.TestCase):
         item = {"published_at": datetime(2026, 6, 1, tzinfo=timezone.utc)}
         self.assertFalse(scan.within_window(item, start, end))
 
-    def test_item_with_unknown_date_is_kept_not_dropped(self):
-        start = datetime(2026, 7, 3, tzinfo=timezone.utc)
-        end = datetime(2026, 7, 10, 23, 59, 59, tzinfo=timezone.utc)
-        item = {"published_at": None}
-        self.assertTrue(scan.within_window(item, start, end))
-
+    
 
 class TestDatabase(unittest.TestCase):
     def setUp(self):

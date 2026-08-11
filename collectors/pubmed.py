@@ -24,6 +24,13 @@ def collect(window_start, window_end):
     """
     window_start/window_end: timezone-aware datetimes.
     Returns a flat list of items in the same shape as the other collectors.
+
+    Items carry date_filtered_upstream=True: esearch already restricts
+    results to [mindate, maxdate], so even though esummary doesn't give a
+    cleanly parseable per-item date (published_at stays None), these items
+    are guaranteed to be within the requested window. scan.within_window
+    reads that flag and keeps them, rather than dropping them the way it
+    now drops other undated items.
     """
     params = {
         "db": "pubmed",
@@ -81,6 +88,7 @@ def collect(window_start, window_end):
             "title": title,
             "url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
             "published_at": None,  # esummary date parsing varies; date filtering already applied server-side via mindate/maxdate
+            "date_filtered_upstream": True,  # esearch limited results to the window, so keep despite no per-item date
             "summary": f"Published in {journal}.",
             "source_name": journal,
             "source_category": "research",

@@ -25,11 +25,23 @@ IMPORTANT, read before enabling a new site:
      `link_selector` for that site in config.SCRAPE_SITES. Once set, the
      generic heuristic is skipped entirely for that site.
 
-  4. Published dates are extracted from HTML where possible (from <time>
-     elements, .published-date classes, meta tags, or date patterns in
-     text). If no date is found, published_at is None, which the scan
-     pipeline treats as "keep it, can't rule it out" -- appropriate for
-     a homepage listing since it's implicitly recent.
+  4. Publish dates are recovered in TWO cheap-to-expensive steps so the
+     scan's strict date window can be applied to scraped items:
+       a. From the article URL, if it embeds a date (e.g. /2026/07/14/slug).
+          Free -- no extra request.
+       b. For headlines that (a) didn't date AND that match the health
+          keyword filter, by fetching the article page and reading its
+          published date (<time> tags, date CSS classes, OG/schema meta).
+          This costs one HTTP request per article, so it runs ONLY on
+          keyword-matching headlines (there's no point spending a request
+          on a story we're about to discard) and is bounded by a count
+          cap, a wall-clock budget, and a short per-request timeout so it
+          can never blow Render's worker timeout. See
+          _enrich_dates_from_articles below and DATE_FILTER_FIX.md.
+     Anything still undated after both steps is left with published_at=None,
+     which -- under the default strict policy (config.KEEP_UNDATED_ITEMS =
+     False) -- means the scan's date window drops it rather than letting it
+     leak in regardless of the requested date.
 
   5. Be a reasonable citizen: this collector sends a descriptive
      User-Agent (config.USER_AGENT) so a site owner can identify and
@@ -40,17 +52,30 @@ IMPORTANT, read before enabling a new site:
 
 import logging
 import re
+import time
 from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
 import config
-from collectors.rss_utils import fetch_url
+from collectors.rss_utils import fetch_url, extract_date_from_url, extract_date_from_element
+from processing.filter_relevance import is_relevant
 
 logger = logging.getLogger(__name__)
 
 MIN_HEADLINE_LENGTH = 20   # shorter than this is almost always nav/UI text, not a headline
 MAX_HEADLINE_LENGTH = 200  # longer than this is almost never a headline either
+
+# --- Optional article date-fetch settings (step 4b above). --------------
+# Read from config.py if present, else these defaults. They are deliberately
+# conservative for the Render free tier (30s worker timeout); raise them if
+# you run on a paid plan or via cron where the timeout doesn't apply.
+_ARTICLE_FETCH_DEFAULTS = {
+    "ARTICLE_DATE_FETCH_ENABLED": True,   # master on/off switch
+    "ARTICLE_DATE_FETCH_MAX": 20,         # hard cap on article fetches per scan
+    "ARTICLE_DATE_FETCH_BUDGET_SECONDS": 10,  # wall-clock ceiling across all article fetches
+    "ARTICLE_DATE_FETCH_TIMEOUT_SECONDS": 5,  # per-request timeout (shorter than the feed timeout)
+}
 
 # Path fragments that are essentially never news article URLs -- used to
 # filter obvious non-article links out of the generic heuristic.
@@ -65,6 +90,13 @@ _GENERIC_HEADLINE_SELECTORS = [
     "h1.entry-title a", "h2.entry-title a", "h3.entry-title a",
     ".post-title a", ".entry-title a", ".article-title a", ".headline a",
 ]
+
+
+def _cfg(name):
+    """Read an optional ARTICLE_DATE_FETCH_* setting from config.py, falling
+    back to the conservative default if it isn't defined -- so this works
+    whether or not those (optional) settings have been added to config.py."""
+    return getattr(config, name, _ARTICLE_FETCH_DEFAULTS[name])
 
 
 def _looks_like_article_link(url, text, base_domain):
@@ -118,9 +150,12 @@ def _extract_generic(soup, base_url, base_domain):
 
 
 def scrape_site(site):
-    """Scrapes one configured site. Returns a list of raw item dicts.
-    Never raises -- logs a warning and returns [] on any failure, so one
-    broken site doesn't stop the others."""
+    """Scrapes one configured site. Returns a list of raw item dicts, each
+    with a publish date recovered from the URL where present (see step 4a in
+    the module docstring). Article-page date recovery (step 4b) happens later,
+    once, in collect() -- so a direct scrape_site() call does no article
+    fetching. Never raises -- logs a warning and returns [] on any failure,
+    so one broken site doesn't stop the others."""
     try:
         html = fetch_url(site["url"])
     except Exception as exc:  # noqa: BLE001
@@ -156,16 +191,16 @@ def scrape_site(site):
     # from multiple spots -- a thumbnail and a title, for instance).
     seen_urls = set()
     items = []
+    url_undated = 0
     for url, title in found:
         if url in seen_urls:
             continue
         seen_urls.add(url)
 
-        # Skip date extraction for web scrapers - it's too slow and dates aren't
-        # reliable on homepage listings anyway. The pipeline keeps items with
-        # published_at=None as "can't rule it out" which is appropriate for
-        # homepage content (implicitly recent).
-        published_at = None
+        # Step 4a: recover a date from the article URL where present (free).
+        published_at = extract_date_from_url(url)
+        if published_at is None:
+            url_undated += 1
 
         items.append({
             "title": re.sub(r"\s+", " ", title).strip(),
@@ -177,12 +212,91 @@ def scrape_site(site):
             "language": site.get("language", "en"),
         })
 
+    if items and url_undated:
+        logger.info(
+            "Web scrape %s: %d of %d candidate items had no date in their URL "
+            "(a date may still be recovered from the article page for "
+            "health-matching headlines; see collect()).",
+            site["name"], url_undated, len(items),
+        )
+
     logger.info("Web scrape %s returned %d candidate items", site["name"], len(items))
     return items
+
+
+def _enrich_dates_from_articles(items):
+    """Second, more expensive date-recovery pass (step 4b in the module
+    docstring). For candidate items that STILL have no date after URL
+    parsing, fetch the article page and read its published date.
+
+    Guardrails, so this is safe on Render's 30s worker timeout:
+      - Runs ONLY on headlines whose title matches the health keyword filter
+        -- no request is spent on a story that would be discarded anyway, so
+        on a typical day this is a handful of fetches, not hundreds.
+      - Stops after config.ARTICLE_DATE_FETCH_MAX fetches (count cap).
+      - Stops after config.ARTICLE_DATE_FETCH_BUDGET_SECONDS of wall-clock
+        (time cap), so a run of slow pages can't accumulate past the budget.
+      - Each fetch uses config.ARTICLE_DATE_FETCH_TIMEOUT_SECONDS (shorter
+        than the feed timeout), so a single hung page is bounded too.
+      - Can be turned off entirely with config.ARTICLE_DATE_FETCH_ENABLED.
+
+    Mutates `items` in place; returns the number of article pages fetched.
+    Items whose date still can't be found are left as published_at=None and
+    fall to the scan's strict window rule (dropped unless KEEP_UNDATED_ITEMS).
+    """
+    if not _cfg("ARTICLE_DATE_FETCH_ENABLED"):
+        return 0
+
+    max_fetches = _cfg("ARTICLE_DATE_FETCH_MAX")
+    budget_s = _cfg("ARTICLE_DATE_FETCH_BUDGET_SECONDS")
+    per_req_timeout = _cfg("ARTICLE_DATE_FETCH_TIMEOUT_SECONDS")
+
+    fetched = 0
+    recovered = 0
+    started = time.monotonic()
+
+    for item in items:
+        if item.get("published_at") is not None:
+            continue  # already dated (from its URL) -- no request needed
+        if fetched >= max_fetches:
+            logger.info(
+                "Article date-fetch cap (%d) reached -- remaining undated items left as-is "
+                "(they'll be dropped by the strict date window unless KEEP_UNDATED_ITEMS).",
+                max_fetches,
+            )
+            break
+        if (time.monotonic() - started) > budget_s:
+            logger.info(
+                "Article date-fetch time budget (%ss) spent -- remaining undated items left as-is.",
+                budget_s,
+            )
+            break
+        # Only spend a request on stories that actually look health-related.
+        if not is_relevant(item)[0]:
+            continue
+        try:
+            html = fetch_url(item["url"], timeout=per_req_timeout)
+        except Exception as exc:  # noqa: BLE001 -- one bad article must not stop the rest
+            logger.warning("Article date-fetch failed for %s: %s", item["url"], exc)
+            fetched += 1  # a failed attempt still spends part of the budget
+            continue
+        fetched += 1
+        dt = extract_date_from_element(html)
+        if dt is not None:
+            item["published_at"] = dt
+            recovered += 1
+
+    if fetched:
+        logger.info(
+            "Article date-fetch: fetched %d article page(s), recovered a publish date for %d.",
+            fetched, recovered,
+        )
+    return fetched
 
 
 def collect():
     all_items = []
     for site in config.SCRAPE_SITES:
         all_items += scrape_site(site)
+    _enrich_dates_from_articles(all_items)
     return all_items

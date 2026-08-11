@@ -6,6 +6,7 @@ third-party dependency beyond `requests` -- fewer moving parts to keep
 free and working long-term.
 """
 
+import logging
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -14,6 +15,17 @@ from email.utils import parsedate_to_datetime
 import requests
 
 import config
+
+logger = logging.getLogger(__name__)
+
+# Patterns for pulling a publish date straight out of an article URL.
+# Only full year/month/day dates are accepted -- a month-only permalink
+# (e.g. /2026/07/slug) is too imprecise to place inside a specific day, so
+# it is treated as "no date". See extract_date_from_url below.
+_URL_DATE_PATTERNS = [
+    re.compile(r"/(\d{4})/(\d{2})/(\d{2})(?:[/_-]|$)"),       # /2026/07/14/slug
+    re.compile(r"[/_-](\d{4})-(\d{2})-(\d{2})(?:[/_-]|$)"),   # /2026-07-14-slug or -2026-07-14
+]
 
 
 def strip_html_tags(text):
@@ -41,12 +53,17 @@ def strip_html_tags(text):
     return text.strip()
 
 
-def fetch_url(url, params=None):
+def fetch_url(url, params=None, timeout=None):
     """GET a URL with a sensible timeout and user-agent. Returns response text.
     Raises requests.RequestException on failure -- callers should catch this
-    per-source so one broken feed doesn't stop the whole scan."""
+    per-source so one broken feed doesn't stop the whole scan.
+
+    `timeout` overrides config.REQUEST_TIMEOUT_SECONDS for this one request --
+    used by the web scraper's article date-fetch, which needs a shorter,
+    tighter timeout so a single slow article page can't eat the whole scan's
+    time budget."""
     headers = {"User-Agent": config.USER_AGENT}
-    resp = requests.get(url, params=params, headers=headers, timeout=config.REQUEST_TIMEOUT_SECONDS)
+    resp = requests.get(url, params=params, headers=headers, timeout=timeout or config.REQUEST_TIMEOUT_SECONDS)
     resp.raise_for_status()
     return resp.text
 
@@ -75,6 +92,32 @@ def parse_rss_datetime(raw):
         return dt.astimezone(timezone.utc)
     except ValueError:
         return None
+
+
+def extract_date_from_url(url):
+    """
+    Best-effort publish date from a URL that embeds one, e.g.
+    https://site.rw/2026/07/14/slug -> 2026-07-14 (UTC).
+
+    Only full year/month/day dates are accepted; month-only permalinks
+    (/2026/07/slug) are too imprecise to place inside a specific day and
+    are treated as 'no date'. Costs nothing -- no extra network request --
+    which is why it's safe to run on every scraped homepage link. Returns
+    an aware UTC datetime, or None when the URL carries no usable date.
+    """
+    if not url:
+        return None
+    for pattern in _URL_DATE_PATTERNS:
+        m = pattern.search(url)
+        if not m:
+            continue
+        year, month, day = (int(g) for g in m.groups())
+        try:
+            return datetime(year, month, day, tzinfo=timezone.utc)
+        except ValueError:
+            # e.g. month 13 or day 40 -- not a real date; keep looking.
+            continue
+    return None
 
 
 def parse_feed(xml_text):

@@ -10,6 +10,7 @@ old rather than breaking news).
 
 import logging
 import re
+import unicodedata
 
 import config
 from collectors.rss_utils import fetch_url, parse_feed
@@ -19,14 +20,36 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://news.google.com/rss/search"
 
 # Outlets known to be Rwandan/local -- used to classify Google News results
-# into the right report section. Anything not in this list is treated as
+# into the right report section. Anything not matched here is treated as
 # international. Extend this list as new local outlets are confirmed.
+#
+# Matching runs on a NORMALISED form of the name (see _normalize): accents
+# stripped, spacing and punctuation removed, lowercased. That's deliberate --
+# Google News reports these names with real spacing/casing ("KT Press",
+# "Kigali Today", "Le Canapé"), and the earlier raw-substring check looked
+# for e.g. "ktpress" inside "kt press" and silently failed, mislabelling KT
+# Press as International. Write hints in readable form; normalisation makes
+# spacing/accents irrelevant on both sides.
 _LOCAL_OUTLET_HINTS = [
-    "new times", "ktpress", "igihe", "taarifa", "panorama", "kigali today",
+    "new times", "kt press", "igihe", "taarifa", "panorama", "kigali today",
     "the chronicles", "rwanda today", "umuseke", "imvaho", "umuryango",
     "le canape", "nouvelle releve", "rwanda news agency", "inyarwanda",
     "pureafricanews", "topafricanews", "allafrica",
 ]
+
+
+def _normalize(text):
+    """Lowercase, strip accents, and remove every non-alphanumeric character,
+    so outlet-name matching survives differences in spacing, punctuation and
+    accents. 'KT Press' -> 'ktpress'; 'Le Canapé' -> 'lecanape'."""
+    if not text:
+        return ""
+    decomposed = unicodedata.normalize("NFKD", text)
+    without_accents = "".join(c for c in decomposed if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", "", without_accents.lower())
+
+
+_NORMALIZED_LOCAL_HINTS = [_normalize(hint) for hint in _LOCAL_OUTLET_HINTS]
 
 
 def _strip_source_suffix(title, source_name):
@@ -44,8 +67,8 @@ def _strip_source_suffix(title, source_name):
 def _classify_category(source_name):
     if not source_name:
         return "local_online"  # unknown publisher -- default; editor can correct in review
-    lowered = source_name.lower()
-    if any(hint in lowered for hint in _LOCAL_OUTLET_HINTS):
+    normalized = _normalize(source_name)
+    if any(hint and hint in normalized for hint in _NORMALIZED_LOCAL_HINTS):
         return "local_online"
     return "international"
 

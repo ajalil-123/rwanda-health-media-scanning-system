@@ -87,15 +87,31 @@ def compute_window(mode, target_date=None, start_date=None):
 
 def within_window(item, window_start, window_end):
     """
-    Items with an unknown publish date are KEPT rather than silently
-    dropped -- some feeds (e.g. PubMed summaries) don't always expose a
-    clean date. They're flagged in the shortlist so the editor can judge
-    them, rather than the system quietly discarding possibly-relevant
-    content because of a parsing gap.
+    Decide whether an item belongs in the scan's strict date window.
+
+      - Known publish date: kept only if it falls within
+        [window_start, window_end].
+      - Date already constrained at the source: items carrying
+        date_filtered_upstream=True (currently only PubMed, which limits
+        results by mindate/maxdate on the API call itself and therefore
+        cannot return anything out of range) are treated as in-window even
+        though their per-item published_at is None.
+      - Unknown date with no upstream guarantee: cannot be confirmed to be
+        inside the requested day/week, so it is DROPPED by default. This is
+        what stops a date-scoped scan from leaking older or undated homepage
+        stories into the results for the date you asked for. Set
+        config.KEEP_UNDATED_ITEMS = True to keep them instead (higher
+        recall, but some results may fall outside the window).
+
+    This changed from an earlier design that kept EVERY undated item, which
+    let homepage-scraped headlines (which are always undated) through no
+    matter what date was requested -- see DATE_FILTER_FIX.md.
     """
+    if item.get("date_filtered_upstream"):
+        return True
     pub = item.get("published_at")
     if pub is None:
-        return True
+        return getattr(config, "KEEP_UNDATED_ITEMS", False)
     return window_start <= pub <= window_end
 
 
@@ -150,7 +166,8 @@ def run_scan(mode, target_date=None, start_date=None, db_path=None):
             "All %d collected items fell OUTSIDE the requested window (%s to %s). "
             "This commonly happens with Google News RSS, which can return items several "
             "days old rather than same-day news -- try --mode weekly, or a wider date range, "
-            "to confirm the collectors themselves are working.",
+            "to confirm the collectors themselves are working. Note that items with no "
+            "detectable publish date are now dropped by default (config.KEEP_UNDATED_ITEMS).",
             len(raw_items), window_start.date(), window_end.date(),
         )
 

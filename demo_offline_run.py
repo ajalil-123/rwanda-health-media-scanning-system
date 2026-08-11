@@ -49,9 +49,12 @@ def fake_raw_items(now):
          "summary": "Une nouvelle campagne de vaccination contre la rougeole.",
          "source_name": "RFI", "source_category": "international", "language": "fr"},
 
-        # Research item (would come from PubMed -- no published_at, as in real esummary responses)
+        # Research item (would come from PubMed -- no published_at, as in real esummary
+        # responses, but flagged date_filtered_upstream because PubMed limits results
+        # to the window at the API level, so within_window keeps it despite no date).
         {"title": "Outcomes of a community health worker malaria intervention in Rwanda",
          "url": "https://pubmed.ncbi.nlm.nih.gov/99999999/", "published_at": None,
+         "date_filtered_upstream": True,
          "summary": "Published in The Lancet Global Health.",
          "source_name": "The Lancet Global Health", "source_category": "research", "language": "en"},
 
